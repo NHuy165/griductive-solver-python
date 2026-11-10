@@ -1,14 +1,14 @@
 from collections.abc import Callable
 from typing import cast
 
-from src.game.clue.at_least_clue import AtLeastClue
-from src.game.clue.at_most_clue import AtMostClue
 from src.game.clue.clue import Clue
 from src.game.clue.clue_type import ClueType
-from src.game.clue.different_clue import DifferentClue
-from src.game.clue.exactly_clue import ExactlyClue
-from src.game.clue.fact_clue import FactClue
-from src.game.clue.same_clue import SameClue
+from src.game.clue.concrete_clues.at_least_clue import AtLeastClue
+from src.game.clue.concrete_clues.at_most_clue import AtMostClue
+from src.game.clue.concrete_clues.different_clue import DifferentClue
+from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
+from src.game.clue.concrete_clues.fact_clue import FactClue
+from src.game.clue.concrete_clues.same_clue import SameClue
 from src.game.core.person import Person
 
 
@@ -20,6 +20,9 @@ class Level:
     ) -> None:
         self.map = map
         self.initially_revealed_region = initially_revealed_region
+
+    def get_map_size(self) -> int:
+        return len(self.map) ** 2
 
     def get_person(self, index: int) -> Person:
         index -= 1
