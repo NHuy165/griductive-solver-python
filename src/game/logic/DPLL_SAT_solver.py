@@ -18,7 +18,12 @@ class DpllSatSolver:
             return False, None, None
 
         valid_literals = confirmed_literals + decided_literals
-        valid_assignment = self._convert_literals_to_assignment(valid_literals)
+
+        assignment_not_needed = self.map_size == 0
+        if assignment_not_needed:
+            valid_assignment = {}
+        else:
+            valid_assignment = self._convert_literals_to_assignment(valid_literals)
 
         return True, confirmed_literals, valid_assignment
 
