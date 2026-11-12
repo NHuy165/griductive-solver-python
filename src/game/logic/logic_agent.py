@@ -1,4 +1,11 @@
-from src.game.core.core_types.classification_result import ClassificationResult
+from copy import deepcopy
+from time import perf_counter
+
+from src.game.core.core_types.assignment_result import AssignmentResult
+from src.game.core.core_types.level_solve_result import (
+    LevelSolveResult,
+    LevelSolveStepResult,
+)
 from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
 from src.game.core.core_types.SAT_solve_result import SATSolveResult
 from src.game.core.core_types.verdict_result import VerdictResult
@@ -12,7 +19,18 @@ class LogicAgent:
     def __init__(self, level: Level) -> None:
         self.level = level
 
-    def classify_from_formula(self, formula: Formula) -> ClassificationResult:
+    def assign_from_formula_with_time(
+        self, formula: Formula
+    ) -> tuple[AssignmentResult, float]:
+        start = perf_counter()
+
+        assignment_result = self.assign_from_formula(formula)
+
+        end = perf_counter()
+
+        return assignment_result, end - start
+
+    def assign_from_formula(self, formula: Formula) -> AssignmentResult:
         indices = self._get_indices_in_formula(formula)
         assert len(indices) > 0
         map_size = max(indices)
@@ -25,7 +43,7 @@ class LogicAgent:
 
         unconfirmed_indices = indices - set(classified_indices)
         assert SAT_solve_result.possible_assignment is not None
-        indices_classified_with_SAT_calls = self._use_SAT_calls_to_classify_indices(
+        indices_classified_with_SAT_calls = self._use_SAT_calls_to_assign_indices(
             indices=sorted(unconfirmed_indices),
             formula=formula,
             possible_assignment=SAT_solve_result.possible_assignment,
@@ -40,17 +58,17 @@ class LogicAgent:
             set(classified_indices.keys()) - set(indices_confirmed_by_propagation)
         )
         indices_unknown_by_SAT_calls = sorted(
-            set(indices_classified_with_SAT_calls) - unconfirmed_indices
+            unconfirmed_indices - set(indices_classified_with_SAT_calls)
         )
 
-        return ClassificationResult(
+        return AssignmentResult(
             indices_confirmed_by_propagation=indices_confirmed_by_propagation,
             indices_confirmed_by_SAT_calls=indices_confirmed_by_SAT_calls,
             indices_unknown_by_SAT_calls=indices_unknown_by_SAT_calls,
-            classification=classified_indices,
+            assignment=classified_indices,
         )
 
-    def get_hint(self, formula: Formula, flipped: list[int]) -> int | None:
+    def get_hint(self, formula: Formula, flipped: set[int]) -> int:
         assert len(flipped) < self.level.get_map_size()
 
         indices = self._get_indices_in_formula(formula)
@@ -60,7 +78,7 @@ class LogicAgent:
                 "No more people can be classified from the current information."
             )
 
-        for index in self.classify_from_formula(formula).classification:
+        for index in self.assign_from_formula(formula).assignment:
             if index in unflipped_indices:
                 return index
 
@@ -68,35 +86,67 @@ class LogicAgent:
             "No more people can be classified from the current information."
         )
 
-    def solve_level(self) -> tuple[Assignment, list[Assignment]]:
-        engine = GameEngine(self.level)
-        formula = self._build_initial_formula(self.level)
-        flipped = list(self.level.get_initially_revealed_region())
-        flipped_at_each_step: list[Assignment] = []
+    def solve_level_with_time(self) -> tuple[LevelSolveResult, float]:
+        start = perf_counter()
 
-        while len(flipped) < self.level.get_map_size():
-            unflipped_confirmed_indices = self._get_unflipped_confirmed_indices(
-                formula, flipped
+        solve_result = self.solve_level()
+
+        end = perf_counter()
+
+        return solve_result, end - start
+
+    def solve_level(self) -> LevelSolveResult:
+        engine = GameEngine(self.level)
+        formula = self._build_initial_formula()
+        flipped = set(self.level.get_initially_revealed_region())
+        flipped_assignment: Assignment = {
+            index: self.level.get_person(index).get_is_criminal() for index in flipped
+        }
+        final_assignment: Assignment = flipped_assignment.copy()
+        solve_steps: list[LevelSolveStepResult] = []
+
+        if len(flipped) == self.level.get_map_size():
+            return LevelSolveResult(
+                final_assignment=final_assignment,
+                solve_steps=solve_steps,
             )
 
-            if len(unflipped_confirmed_indices) == 0:
+        while len(flipped) < self.level.get_map_size():
+            full_assignment_result = self.assign_from_formula(formula)
+            confirmed_assignments = full_assignment_result.assignment
+            unflipped_confirmed_assignments = (
+                self._remove_flipped_from_confirmed_assignments(
+                    confirmed_assignments, flipped
+                )
+            )
+
+            if len(unflipped_confirmed_assignments) == 0:
                 raise ValueError(
                     "No further person can be confirmed with the current clues."
                 )
+            final_assignment.update(unflipped_confirmed_assignments)
 
             revealed_clauses = self._flip_people_and_collect_clauses(
-                engine, formula, unflipped_confirmed_indices
+                engine, formula, unflipped_confirmed_assignments
             )
 
+            step_assignment_result = self._remove_flipped_from_assignment_result(
+                full_assignment_result, flipped
+            )
+            level_solve_step = LevelSolveStepResult(
+                current_formula=deepcopy(formula),
+                current_indices_flipped=flipped.copy(),
+                assignment_result=step_assignment_result,
+                revealed_clues=[
+                    self.level.get_person(index).get_clue()
+                    for index in unflipped_confirmed_assignments
+                ],
+            )
+            solve_steps.append(level_solve_step)
             formula.extend(revealed_clauses)
-            flipped.extend(unflipped_confirmed_indices)
-            flipped_at_each_step.append(unflipped_confirmed_indices)
+            flipped.update(unflipped_confirmed_assignments)
 
-        complete_assignment = self._get_complete_assignment(
-            formula, self.level.get_map_size()
-        )
-
-        return complete_assignment, flipped_at_each_step
+        return LevelSolveResult(final_assignment, solve_steps)
 
     def unique_check(self, formula: Formula) -> bool:
         DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
@@ -109,18 +159,39 @@ class LogicAgent:
         assert possible_assignment is not None
         assert len(possible_assignment) == self.level.get_map_size()
 
-        counter_clause: Clause = []
-        for index in possible_assignment:
-            opposite_literal = -1 * possible_assignment[index] * index
-            counter_clause.append(opposite_literal)
-
+        counter_clause: Clause = [
+            -index if value else index for index, value in possible_assignment.items()
+        ]
         extended_formula = formula + [counter_clause]
+
         SAT_solve_result = DPLL_SAT_solver.SAT_solve(extended_formula)
         is_unique = not SAT_solve_result.is_SAT
 
         return is_unique
 
-    def _use_SAT_calls_to_classify_indices(
+    def _remove_flipped_from_assignment_result(
+        self, assignment_result: AssignmentResult, flipped: set[int]
+    ) -> AssignmentResult:
+        indices_confirmed_by_propagation = sorted(
+            set(assignment_result.indices_confirmed_by_propagation) - flipped
+        )
+        indices_confirmed_by_SAT_calls = sorted(
+            set(assignment_result.indices_confirmed_by_SAT_calls) - flipped
+        )
+        indices_unknown_by_SAT_calls = sorted(
+            set(assignment_result.indices_unknown_by_SAT_calls) - flipped
+        )
+        assignment = self._remove_flipped_from_confirmed_assignments(
+            assignment_result.assignment, flipped
+        )
+        return AssignmentResult(
+            indices_confirmed_by_propagation,
+            indices_confirmed_by_SAT_calls,
+            indices_unknown_by_SAT_calls,
+            assignment,
+        )
+
+    def _use_SAT_calls_to_assign_indices(
         self,
         indices: list[int],
         formula: Formula,
@@ -140,26 +211,26 @@ class LogicAgent:
 
         return classified_people
 
-    def _get_unflipped_confirmed_indices(
-        self, formula: Formula, flipped: list[int]
+    def _remove_flipped_from_confirmed_assignments(
+        self, confirmed_assignments: Assignment, flipped: set[int]
     ) -> Assignment:
-        confirmed_people = self.classify_from_formula(formula).classification
-
-        return {
+        unflipped_confirmed_assignments = {
             index: is_criminal
-            for index, is_criminal in confirmed_people.items()
+            for index, is_criminal in confirmed_assignments.items()
             if index not in flipped
         }
+
+        return unflipped_confirmed_assignments
 
     def _flip_people_and_collect_clauses(
         self,
         engine: GameEngine,
         formula: Formula,
-        unflipped_confirmed_indices: Assignment,
+        unflipped_confirmed_assignments: Assignment,
     ) -> Formula:
         revealed_clauses: Formula = []
 
-        for index, is_criminal in unflipped_confirmed_indices.items():
+        for index, is_criminal in unflipped_confirmed_assignments.items():
             verdict, clue = engine.validate_verdict_and_provide_clue_if_correct(
                 formula, index, is_criminal
             )
@@ -170,16 +241,6 @@ class LogicAgent:
             revealed_clauses.extend(clue.to_cnf())
 
         return revealed_clauses
-
-    def _get_complete_assignment(self, formula: Formula, map_size: int) -> Assignment:
-        DPLL_SAT_solver = DpllSatSolver(map_size)
-
-        SAT_result = DPLL_SAT_solver.SAT_solve(formula)
-
-        assert SAT_result.is_SAT
-        assert SAT_result.possible_assignment is not None
-
-        return SAT_result.possible_assignment
 
     def _SAT_solve_formula(self, formula: Formula, map_size: int) -> SATSolveResult:
         DPLL_SAT_solver = DpllSatSolver(map_size)
@@ -197,11 +258,13 @@ class LogicAgent:
     ) -> Assignment:
         return {abs(literal): literal > 0 for literal in confirmed_literals}
 
-    def _build_initial_formula(self, level: Level) -> Formula:
+    def _build_initial_formula(self) -> Formula:
         formula: Formula = []
 
-        for index in level.get_initially_revealed_region():
-            formula.extend(level.get_person(index).get_clue().to_cnf())
+        for index in self.level.get_initially_revealed_region():
+            person = self.level.get_person(index)
+            formula.append([index if person.get_is_criminal() else -index])
+            formula.extend(person.get_clue().to_cnf())
 
         return formula
 

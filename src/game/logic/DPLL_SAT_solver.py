@@ -12,7 +12,7 @@ class DpllSatSolver:
     def __init__(self, map_size: int) -> None:
         self.map_size = map_size
 
-    def SAT_solve_with_time(self, formula) -> tuple[SATSolveResult, float]:
+    def SAT_solve_with_time(self, formula: Formula) -> tuple[SATSolveResult, float]:
         start = perf_counter()
 
         SAT_result = self.SAT_solve(formula)
@@ -45,7 +45,7 @@ class DpllSatSolver:
 
         return SATSolveResult(
             is_SAT=True,
-            confirmed_literals=valid_literals,
+            confirmed_literals=confirmed_literals,
             possible_assignment=possible_assignment,
             events=events,
         )
