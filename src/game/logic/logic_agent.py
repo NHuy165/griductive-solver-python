@@ -7,40 +7,41 @@ from src.game.logic.sat_caller import SATCaller
 
 
 class LogicAgent:
-    @classmethod
-    def classify_confirmed_people(cls, formula: Formula) -> Assignment:
-        indices = cls._get_indices_in_formula(formula)
-        if len(indices) == 0:
-            return {}
+    def __init__(self, level: Level) -> None:
+        self.level = level
 
-        confirmed_literals, valid_assignment = (
-            cls._SAT_solve_formula_for_literals_and_assignment(
-                formula, map_size=max(indices)
-            )
+    def classify_confirmed_people(self, formula: Formula) -> Assignment:
+        indices = self._get_indices_in_formula(formula)
+        assert len(indices) > 0
+        map_size = max(indices)
+
+        confirmed_literals, possible_assignment = (
+            self._SAT_solve_formula_for_literals_and_assignment(formula, map_size)
         )
-        classified_people = cls._convert_literals_to_assignment(confirmed_literals)
+        classified_indices = self._convert_literals_to_assignment(confirmed_literals)
 
-        unconfirmed_indices = indices - set(classified_people)
-        for index in sorted(unconfirmed_indices):
-            is_criminal = SATCaller.SAT_call(
-                formula,
-                index,
-                was_criminal_in_one_valid_assignment=valid_assignment[index],
-            )
+        unconfirmed_indices = indices - set(classified_indices)
+        indices_classified_with_SAT_calls = self._use_SAT_calls_to_classify_indices(
+            indices=sorted(unconfirmed_indices),
+            formula=formula,
+            possible_assignment=possible_assignment,
+        )
 
-            if is_criminal is not None:
-                classified_people[index] = is_criminal
+        classified_indices.update(indices_classified_with_SAT_calls)
 
-        return classified_people
+        return classified_indices
 
-    @classmethod
-    def get_hint(cls, formula: Formula, flipped: list[int]) -> int | None:
-        indices = cls._get_indices_in_formula(formula)
+    def get_hint(self, formula: Formula, flipped: list[int]) -> int | None:
+        assert len(flipped) < self.level.get_map_size()
+
+        indices = self._get_indices_in_formula(formula)
         unflipped_indices = indices - set(flipped)
         if len(unflipped_indices) == 0:
-            return None
+            raise ValueError(
+                "No more people can be classified from the current information."
+            )
 
-        for index in cls.classify_confirmed_people(formula):
+        for index in self.classify_confirmed_people(formula):
             if index in unflipped_indices:
                 return index
 
@@ -48,39 +49,60 @@ class LogicAgent:
             "No more people can be classified from the current information."
         )
 
-    @classmethod
-    def solve_level(cls, engine: GameEngine) -> tuple[Assignment, list[Assignment]]:
-        level = engine.level
-        formula = cls._build_initial_formula(level)
-        flipped = list(level.get_initially_revealed_region())
-        flipped_people_per_step: list[Assignment] = []
+    def solve_level(self) -> tuple[Assignment, list[Assignment]]:
+        engine = GameEngine(self.level)
+        formula = self._build_initial_formula(self.level)
+        flipped = list(self.level.get_initially_revealed_region())
+        flipped_at_each_step: list[Assignment] = []
 
-        while len(flipped) < level.get_map_size():
-            people_to_flip = cls._get_unflipped_confirmed_people(formula, flipped)
+        while len(flipped) < self.level.get_map_size():
+            unflipped_confirmed_indices = self._get_unflipped_confirmed_indices(
+                formula, flipped
+            )
 
-            if len(people_to_flip) == 0:
+            if len(unflipped_confirmed_indices) == 0:
                 raise ValueError(
                     "No further person can be confirmed with the current clues."
                 )
 
-            revealed_clauses = cls._flip_people_and_collect_clauses(
-                engine, formula, people_to_flip
+            revealed_clauses = self._flip_people_and_collect_clauses(
+                engine, formula, unflipped_confirmed_indices
             )
-            formula.extend(revealed_clauses)
-            flipped.extend(people_to_flip)
-            flipped_people_per_step.append(people_to_flip)
 
-        complete_assignment = cls._get_complete_assignment(
-            formula, level.get_map_size()
+            formula.extend(revealed_clauses)
+            flipped.extend(unflipped_confirmed_indices)
+            flipped_at_each_step.append(unflipped_confirmed_indices)
+
+        complete_assignment = self._get_complete_assignment(
+            formula, self.level.get_map_size()
         )
 
-        return complete_assignment, flipped_people_per_step
+        return complete_assignment, flipped_at_each_step
 
-    @classmethod
-    def _get_unflipped_confirmed_people(
-        cls, formula: Formula, flipped: list[int]
+    def _use_SAT_calls_to_classify_indices(
+        self,
+        indices: list[int],
+        formula: Formula,
+        possible_assignment: Assignment,
     ) -> Assignment:
-        confirmed_people = cls.classify_confirmed_people(formula)
+        classified_people: Assignment = {}
+
+        for index in sorted(indices):
+            is_criminal = SATCaller.SAT_call(
+                formula,
+                index,
+                was_criminal_in_one_possible_assignment=possible_assignment[index],
+            )
+
+            if is_criminal is not None:
+                classified_people[index] = is_criminal
+
+        return classified_people
+
+    def _get_unflipped_confirmed_indices(
+        self, formula: Formula, flipped: list[int]
+    ) -> Assignment:
+        confirmed_people = self.classify_confirmed_people(formula)
 
         return {
             index: is_criminal
@@ -88,13 +110,15 @@ class LogicAgent:
             if index not in flipped
         }
 
-    @classmethod
     def _flip_people_and_collect_clauses(
-        cls, engine: GameEngine, formula: Formula, people_to_flip: Assignment
+        self,
+        engine: GameEngine,
+        formula: Formula,
+        unflipped_confirmed_indices: Assignment,
     ) -> Formula:
         revealed_clauses: Formula = []
 
-        for index, is_criminal in people_to_flip.items():
+        for index, is_criminal in unflipped_confirmed_indices.items():
             verdict, clue = engine.validate_verdict_and_provide_clue_if_correct(
                 formula, index, is_criminal
             )
@@ -106,41 +130,37 @@ class LogicAgent:
 
         return revealed_clauses
 
-    @classmethod
-    def _get_complete_assignment(cls, formula: Formula, map_size: int) -> Assignment:
+    def _get_complete_assignment(self, formula: Formula, map_size: int) -> Assignment:
         DPLL_SAT_solver = DpllSatSolver(map_size)
 
-        is_SAT, _, valid_assignment = DPLL_SAT_solver.SAT_solve(formula)
+        is_SAT, _, possible_assignment = DPLL_SAT_solver.SAT_solve(formula)
 
         assert is_SAT
-        assert valid_assignment is not None
+        assert possible_assignment is not None
 
-        return valid_assignment
+        return possible_assignment
 
-    @classmethod
     def _SAT_solve_formula_for_literals_and_assignment(
-        cls, formula: Formula, map_size: int
+        self, formula: Formula, map_size: int
     ) -> tuple[list[int], Assignment]:
         DPLL_SAT_solver = DpllSatSolver(map_size)
 
-        is_SAT, confirmed_literals, valid_assignment = DPLL_SAT_solver.SAT_solve(
+        is_SAT, confirmed_literals, possible_assignment = DPLL_SAT_solver.SAT_solve(
             formula
         )
 
         assert is_SAT is True
         assert confirmed_literals is not None
-        assert valid_assignment is not None
+        assert possible_assignment is not None
 
-        return confirmed_literals, valid_assignment
+        return confirmed_literals, possible_assignment
 
-    @classmethod
     def _convert_literals_to_assignment(
-        cls, confirmed_literals: list[int]
+        self, confirmed_literals: list[int]
     ) -> Assignment:
         return {abs(literal): literal > 0 for literal in confirmed_literals}
 
-    @classmethod
-    def _build_initial_formula(cls, level: Level) -> Formula:
+    def _build_initial_formula(self, level: Level) -> Formula:
         formula: Formula = []
 
         for index in level.get_initially_revealed_region():
@@ -148,6 +168,5 @@ class LogicAgent:
 
         return formula
 
-    @classmethod
-    def _get_indices_in_formula(cls, formula: Formula) -> set[int]:
+    def _get_indices_in_formula(self, formula: Formula) -> set[int]:
         return {abs(literal) for clause in formula for literal in clause}

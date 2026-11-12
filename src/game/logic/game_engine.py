@@ -19,7 +19,7 @@ class GameEngine:
         is_criminal = SATCaller.SAT_call(
             formula,
             index,
-            was_criminal_in_one_valid_assignment=index_was_assigned_criminal,
+            was_criminal_in_one_possible_assignment=index_was_assigned_criminal,
         )
 
         if is_criminal is None:
@@ -33,10 +33,10 @@ class GameEngine:
     def _get_possible_index_assignment(self, formula: Formula, index: int) -> bool:
         DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
 
-        is_SAT, _, valid_assignment = DPLL_SAT_solver.SAT_solve(formula)
+        is_SAT, _, possible_assignment = DPLL_SAT_solver.SAT_solve(formula)
         assert is_SAT is True
-        assert valid_assignment is not None
+        assert possible_assignment is not None
 
-        index_was_assigned_criminal = valid_assignment[index]
+        index_was_assigned_criminal = possible_assignment[index]
 
         return index_was_assigned_criminal

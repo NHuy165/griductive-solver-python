@@ -1,4 +1,4 @@
-from src.game.core.core_types import Assignment, Formula
+from src.game.core.core_types import Assignment, Clause, Formula
 
 
 class DpllSatSolver:
@@ -11,21 +11,18 @@ class DpllSatSolver:
         root_propagation = self._propagate_and_extract_implied_literals(formula)
         if root_propagation is None:
             return False, None, None
-        root_formula, confirmed_literals = root_propagation
+        propagated_formula, confirmed_literals = root_propagation
 
-        decided_literals = self._solve(root_formula)
+        decided_literals = self._solve(propagated_formula)
         if decided_literals is None:
             return False, None, None
 
         valid_literals = confirmed_literals + decided_literals
+        possible_assignment = self._convert_literals_to_assignment_if_needed(
+            valid_literals
+        )
 
-        assignment_not_needed = self.map_size == 0
-        if assignment_not_needed:
-            valid_assignment = {}
-        else:
-            valid_assignment = self._convert_literals_to_assignment(valid_literals)
-
-        return True, confirmed_literals, valid_assignment
+        return True, confirmed_literals, possible_assignment
 
     def _propagate_and_extract_implied_literals(
         self, formula: Formula
@@ -34,20 +31,18 @@ class DpllSatSolver:
         propagated_literals: list[int] = []
 
         while True:
-            if self._has_empty_clause(current_formula):
+            if self._contains_insoluble_clause(current_formula):
                 return None
 
-            unit_literal = self._find_first_instance_of_unit_clause_literal(
-                current_formula
-            )
+            literal = self._find_first_instance_of_unit_clause(current_formula)
 
-            if unit_literal is None:
+            if literal is None:
                 return current_formula, propagated_literals
+            propagated_literals.append(literal)
 
             current_formula = self._simplify_formula_using_literal(
-                current_formula, unit_literal
+                current_formula, literal
             )
-            propagated_literals.append(unit_literal)
 
     def _solve(self, formula: Formula) -> list[int] | None:
         if len(formula) == 0:
@@ -90,36 +85,53 @@ class DpllSatSolver:
         simplified_formula: Formula = []
 
         for clause in formula:
-            clause_already_satisfied = literal in clause
-            if clause_already_satisfied:
+            simplified_clause = self._simplify_clause_using_literal(clause, literal)
+
+            if simplified_clause is None:
                 continue
 
-            clause_without_wrong_literal = [
-                other_literal for other_literal in clause if other_literal != -literal
-            ]
-            simplified_formula.append(clause_without_wrong_literal)
+            simplified_formula.append(simplified_clause)
 
         return simplified_formula
 
-    def _find_first_instance_of_unit_clause_literal(
-        self, formula: Formula
-    ) -> int | None:
+    def _simplify_clause_using_literal(
+        self, clause: Clause, literal: int
+    ) -> Clause | None:
+        clause_already_satisfied = literal in clause
+        if clause_already_satisfied:
+            return None
+
+        clause_without_wrong_literal = [
+            other_literal for other_literal in clause if other_literal != -literal
+        ]
+        return clause_without_wrong_literal
+
+    def _find_first_instance_of_unit_clause(self, formula: Formula) -> int | None:
         for clause in formula:
             if len(clause) == 1:
                 return clause[0]
 
         return None
 
-    def _has_empty_clause(self, formula: Formula) -> bool:
+    def _contains_insoluble_clause(self, formula: Formula) -> bool:
         return any(len(clause) == 0 for clause in formula)
 
     def _select_min_index(self, formula: Formula) -> int:
         return min(abs(literal) for clause in formula for literal in clause)
 
-    def _convert_literals_to_assignment(self, valid_literals: list[int]) -> Assignment:
-        valid_assignment = {index: False for index in range(1, self.map_size + 1)}
+    def _convert_literals_to_assignment_if_needed(
+        self, valid_literals: list[int]
+    ) -> Assignment:
+        assignment_not_needed = self.map_size == 0
 
-        for literal in valid_literals:
-            valid_assignment[abs(literal)] = literal > 0
+        if assignment_not_needed:
+            possible_assignment = {}
+        else:
+            possible_assignment = {
+                index: False for index in range(1, self.map_size + 1)
+            }
 
-        return valid_assignment
+            for literal in valid_literals:
+                possible_assignment[abs(literal)] = literal > 0
+
+        return possible_assignment
