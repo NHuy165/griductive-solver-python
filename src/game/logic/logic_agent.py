@@ -1,4 +1,4 @@
-from src.game.core.core_types import Assignment, Formula
+from src.game.core.core_types import Assignment, Clause, Formula
 from src.game.core.level import Level
 from src.game.core.SAT_solve_result import SATSolveResult
 from src.game.core.verdict_result import VerdictResult
@@ -81,6 +81,28 @@ class LogicAgent:
         )
 
         return complete_assignment, flipped_at_each_step
+
+    def unique_check(self, formula: Formula) -> bool:
+        DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
+        SAT_solve_result = DPLL_SAT_solver.SAT_solve(formula)
+
+        if not SAT_solve_result.is_SAT:
+            return False
+
+        possible_assignment = SAT_solve_result.possible_assignment
+        assert possible_assignment is not None
+        assert len(possible_assignment) == self.level.get_map_size()
+
+        counter_clause: Clause = []
+        for index in possible_assignment:
+            opposite_literal = -1 * possible_assignment[index] * index
+            counter_clause.append(opposite_literal)
+
+        extended_formula = formula + [counter_clause]
+        SAT_solve_result = DPLL_SAT_solver.SAT_solve(extended_formula)
+        is_unique = not SAT_solve_result.is_SAT
+
+        return is_unique
 
     def _use_SAT_calls_to_classify_indices(
         self,
