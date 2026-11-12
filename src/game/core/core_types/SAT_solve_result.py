@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from src.game.core.core_types import Assignment
+from src.game.core.miscellaneous import Assignment
 
 
 class SATSolveEvent(str, Enum):

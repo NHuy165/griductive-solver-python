@@ -1,7 +1,7 @@
 from src.game.clue.clue import Clue
-from src.game.core.core_types import Formula
+from src.game.core.core_types.miscellaneous import Formula
+from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.core.level import Level
-from src.game.core.verdict_result import VerdictResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.sat_caller import SATCaller
 

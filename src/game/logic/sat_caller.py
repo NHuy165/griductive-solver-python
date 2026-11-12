@@ -1,4 +1,4 @@
-from src.game.core.core_types import Formula
+from src.game.core.core_types.miscellaneous import Formula
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 
 

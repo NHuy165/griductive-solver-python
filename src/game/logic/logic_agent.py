@@ -1,7 +1,8 @@
-from src.game.core.core_types import Assignment, Clause, Formula
+from src.game.core.core_types.classification_result import ClassificationResult
+from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
+from src.game.core.core_types.SAT_solve_result import SATSolveResult
+from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.core.level import Level
-from src.game.core.SAT_solve_result import SATSolveResult
-from src.game.core.verdict_result import VerdictResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.game_engine import GameEngine
 from src.game.logic.sat_caller import SATCaller
@@ -11,28 +12,43 @@ class LogicAgent:
     def __init__(self, level: Level) -> None:
         self.level = level
 
-    def classify_confirmed_people(self, formula: Formula) -> Assignment:
+    def classify_from_formula(self, formula: Formula) -> ClassificationResult:
         indices = self._get_indices_in_formula(formula)
         assert len(indices) > 0
         map_size = max(indices)
 
-        SAT_result = self._SAT_solve_formula(formula, map_size)
-        assert SAT_result.confirmed_literals is not None
+        SAT_solve_result = self._SAT_solve_formula(formula, map_size)
+        assert SAT_solve_result.confirmed_literals is not None
         classified_indices = self._convert_literals_to_assignment(
-            SAT_result.confirmed_literals
+            SAT_solve_result.confirmed_literals
         )
 
         unconfirmed_indices = indices - set(classified_indices)
-        assert SAT_result.possible_assignment is not None
+        assert SAT_solve_result.possible_assignment is not None
         indices_classified_with_SAT_calls = self._use_SAT_calls_to_classify_indices(
             indices=sorted(unconfirmed_indices),
             formula=formula,
-            possible_assignment=SAT_result.possible_assignment,
+            possible_assignment=SAT_solve_result.possible_assignment,
         )
 
         classified_indices.update(indices_classified_with_SAT_calls)
 
-        return classified_indices
+        indices_confirmed_by_propagation = sorted(
+            [abs(literal) for literal in SAT_solve_result.confirmed_literals]
+        )
+        indices_confirmed_by_SAT_calls = sorted(
+            set(classified_indices.keys()) - set(indices_confirmed_by_propagation)
+        )
+        indices_unknown_by_SAT_calls = sorted(
+            set(indices_classified_with_SAT_calls) - unconfirmed_indices
+        )
+
+        return ClassificationResult(
+            indices_confirmed_by_propagation=indices_confirmed_by_propagation,
+            indices_confirmed_by_SAT_calls=indices_confirmed_by_SAT_calls,
+            indices_unknown_by_SAT_calls=indices_unknown_by_SAT_calls,
+            classification=classified_indices,
+        )
 
     def get_hint(self, formula: Formula, flipped: list[int]) -> int | None:
         assert len(flipped) < self.level.get_map_size()
@@ -44,7 +60,7 @@ class LogicAgent:
                 "No more people can be classified from the current information."
             )
 
-        for index in self.classify_confirmed_people(formula):
+        for index in self.classify_from_formula(formula).classification:
             if index in unflipped_indices:
                 return index
 
@@ -127,7 +143,7 @@ class LogicAgent:
     def _get_unflipped_confirmed_indices(
         self, formula: Formula, flipped: list[int]
     ) -> Assignment:
-        confirmed_people = self.classify_confirmed_people(formula)
+        confirmed_people = self.classify_from_formula(formula).classification
 
         return {
             index: is_criminal

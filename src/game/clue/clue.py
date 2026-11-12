@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.game.clue.clue_type import ClueType
-from src.game.core.core_types import Assignment, Formula
+from src.game.core.core_types.miscellaneous import Assignment, Formula
 
 
 class Clue(ABC):

@@ -1,7 +1,11 @@
 from time import perf_counter
 
-from src.game.core.core_types import Assignment, Clause, Formula
-from src.game.core.SAT_solve_result import SATSolveEvent, SATSolveEvents, SATSolveResult
+from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
+from src.game.core.core_types.SAT_solve_result import (
+    SATSolveEvent,
+    SATSolveEvents,
+    SATSolveResult,
+)
 
 
 class DpllSatSolver:
