@@ -15,9 +15,9 @@ class SATCaller:
         opposite_literal = -index if was_criminal_in_one_possible_assignment else index
         formula_with_opposite = formula + [[opposite_literal]]
 
-        is_SAT, _, _ = DPLL_SAT_solver.SAT_solve(formula_with_opposite)
+        SAT_result = DPLL_SAT_solver.SAT_solve(formula_with_opposite)
 
-        if is_SAT:
+        if SAT_result.is_SAT:
             return None
 
         return was_criminal_in_one_possible_assignment

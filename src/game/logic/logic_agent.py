@@ -1,5 +1,6 @@
 from src.game.core.core_types import Assignment, Formula
 from src.game.core.level import Level
+from src.game.core.SAT_solve_result import SATSolveResult
 from src.game.core.verdict_result import VerdictResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.game_engine import GameEngine
@@ -15,16 +16,18 @@ class LogicAgent:
         assert len(indices) > 0
         map_size = max(indices)
 
-        confirmed_literals, possible_assignment = (
-            self._SAT_solve_formula_for_literals_and_assignment(formula, map_size)
+        SAT_result = self._SAT_solve_formula(formula, map_size)
+        assert SAT_result.confirmed_literals is not None
+        classified_indices = self._convert_literals_to_assignment(
+            SAT_result.confirmed_literals
         )
-        classified_indices = self._convert_literals_to_assignment(confirmed_literals)
 
         unconfirmed_indices = indices - set(classified_indices)
+        assert SAT_result.possible_assignment is not None
         indices_classified_with_SAT_calls = self._use_SAT_calls_to_classify_indices(
             indices=sorted(unconfirmed_indices),
             formula=formula,
-            possible_assignment=possible_assignment,
+            possible_assignment=SAT_result.possible_assignment,
         )
 
         classified_indices.update(indices_classified_with_SAT_calls)
@@ -133,27 +136,23 @@ class LogicAgent:
     def _get_complete_assignment(self, formula: Formula, map_size: int) -> Assignment:
         DPLL_SAT_solver = DpllSatSolver(map_size)
 
-        is_SAT, _, possible_assignment = DPLL_SAT_solver.SAT_solve(formula)
+        SAT_result = DPLL_SAT_solver.SAT_solve(formula)
 
-        assert is_SAT
-        assert possible_assignment is not None
+        assert SAT_result.is_SAT
+        assert SAT_result.possible_assignment is not None
 
-        return possible_assignment
+        return SAT_result.possible_assignment
 
-    def _SAT_solve_formula_for_literals_and_assignment(
-        self, formula: Formula, map_size: int
-    ) -> tuple[list[int], Assignment]:
+    def _SAT_solve_formula(self, formula: Formula, map_size: int) -> SATSolveResult:
         DPLL_SAT_solver = DpllSatSolver(map_size)
 
-        is_SAT, confirmed_literals, possible_assignment = DPLL_SAT_solver.SAT_solve(
-            formula
-        )
+        SAT_result = DPLL_SAT_solver.SAT_solve(formula)
 
-        assert is_SAT is True
-        assert confirmed_literals is not None
-        assert possible_assignment is not None
+        assert SAT_result.is_SAT is True
+        assert SAT_result.confirmed_literals is not None
+        assert SAT_result.possible_assignment is not None
 
-        return confirmed_literals, possible_assignment
+        return SAT_result
 
     def _convert_literals_to_assignment(
         self, confirmed_literals: list[int]

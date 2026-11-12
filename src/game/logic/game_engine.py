@@ -33,10 +33,10 @@ class GameEngine:
     def _get_possible_index_assignment(self, formula: Formula, index: int) -> bool:
         DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
 
-        is_SAT, _, possible_assignment = DPLL_SAT_solver.SAT_solve(formula)
-        assert is_SAT is True
-        assert possible_assignment is not None
+        SAT_result = DPLL_SAT_solver.SAT_solve(formula)
+        assert SAT_result.is_SAT is True
+        assert SAT_result.possible_assignment is not None
 
-        index_was_assigned_criminal = possible_assignment[index]
+        index_was_assigned_criminal = SAT_result.possible_assignment[index]
 
         return index_was_assigned_criminal
