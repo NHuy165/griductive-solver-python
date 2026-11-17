@@ -1,6 +1,7 @@
 from copy import deepcopy
 from time import perf_counter
 
+from src.game.clue.clue import Clue
 from src.game.core.core_types.assignment_result import AssignmentResult
 from src.game.core.core_types.level_solve_result import (
     LevelSolveResult,
@@ -16,8 +17,8 @@ from src.game.logic.sat_caller import SATCaller
 
 
 class LogicAgent:
-    def __init__(self, level: Level) -> None:
-        self.level = level
+    def __init__(self, engine: GameEngine) -> None:
+        self.engine = engine
 
     def assign_from_formula_with_time(
         self, formula: Formula
@@ -69,7 +70,7 @@ class LogicAgent:
         )
 
     def get_hint(self, formula: Formula, flipped: set[int]) -> int:
-        assert len(flipped) < self.level.get_map_size()
+        assert len(flipped) < self.engine.get_map_size()
 
         indices = self._get_indices_in_formula(formula)
         unflipped_indices = indices - set(flipped)
@@ -96,22 +97,18 @@ class LogicAgent:
         return solve_result, end - start
 
     def solve_level(self) -> LevelSolveResult:
-        engine = GameEngine(self.level)
-        formula = self._build_initial_formula()
-        flipped = set(self.level.get_initially_revealed_region())
-        flipped_assignment: Assignment = {
-            index: self.level.get_person(index).get_is_criminal() for index in flipped
-        }
-        final_assignment: Assignment = flipped_assignment.copy()
+        formula = self.engine.get_initial_formula()
+        flipped = self.engine.get_initially_revealed_region()
+        final_assignment: Assignment = self.engine.get_initially_revealed_assignments()
         solve_steps: list[LevelSolveStepResult] = []
 
-        if len(flipped) == self.level.get_map_size():
+        if len(flipped) == self.engine.get_map_size():
             return LevelSolveResult(
                 final_assignment=final_assignment,
                 solve_steps=solve_steps,
             )
 
-        while len(flipped) < self.level.get_map_size():
+        while len(flipped) < self.engine.get_map_size():
             full_assignment_result = self.assign_from_formula(formula)
             confirmed_assignments = full_assignment_result.assignment
             unflipped_confirmed_assignments = (
@@ -126,8 +123,8 @@ class LogicAgent:
                 )
             final_assignment.update(unflipped_confirmed_assignments)
 
-            revealed_clauses = self._flip_people_and_collect_clauses(
-                engine, formula, unflipped_confirmed_assignments
+            revealed_clues = self._flip_people_and_collect_clues(
+                formula, unflipped_confirmed_assignments
             )
 
             step_assignment_result = self._remove_flipped_from_assignment_result(
@@ -137,19 +134,22 @@ class LogicAgent:
                 current_formula=deepcopy(formula),
                 current_indices_flipped=flipped.copy(),
                 assignment_result=step_assignment_result,
-                revealed_clues=[
-                    self.level.get_person(index).get_clue()
-                    for index in unflipped_confirmed_assignments
-                ],
+                revealed_clues=revealed_clues,
             )
             solve_steps.append(level_solve_step)
-            formula.extend(revealed_clauses)
+            formula.extend(self._build_formula_from_clues(revealed_clues))
+            formula.extend(
+                [
+                    [index] if is_criminal else [-index]
+                    for index, is_criminal in unflipped_confirmed_assignments.items()
+                ]
+            )
             flipped.update(unflipped_confirmed_assignments)
 
         return LevelSolveResult(final_assignment, solve_steps)
 
     def unique_check(self, formula: Formula) -> bool:
-        DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
+        DPLL_SAT_solver = DpllSatSolver(self.engine.get_map_size())
         SAT_solve_result = DPLL_SAT_solver.SAT_solve(formula)
 
         if not SAT_solve_result.is_SAT:
@@ -157,7 +157,7 @@ class LogicAgent:
 
         possible_assignment = SAT_solve_result.possible_assignment
         assert possible_assignment is not None
-        assert len(possible_assignment) == self.level.get_map_size()
+        assert len(possible_assignment) == self.engine.get_map_size()
 
         counter_clause: Clause = [
             -index if value else index for index, value in possible_assignment.items()
@@ -222,25 +222,23 @@ class LogicAgent:
 
         return unflipped_confirmed_assignments
 
-    def _flip_people_and_collect_clauses(
+    def _flip_people_and_collect_clues(
         self,
-        engine: GameEngine,
         formula: Formula,
         unflipped_confirmed_assignments: Assignment,
-    ) -> Formula:
-        revealed_clauses: Formula = []
+    ) -> list[Clue]:
+        revealed_clues: list[Clue] = []
 
         for index, is_criminal in unflipped_confirmed_assignments.items():
-            verdict, clue = engine.validate_verdict_and_provide_clue_if_correct(
+            verdict, clue = self.engine.validate_verdict_and_provide_clue_if_correct(
                 formula, index, is_criminal
             )
 
             assert verdict == VerdictResult.CORRECT
             assert clue is not None
+            revealed_clues.append(clue)
 
-            revealed_clauses.extend(clue.to_cnf())
-
-        return revealed_clauses
+        return revealed_clues
 
     def _SAT_solve_formula(self, formula: Formula, map_size: int) -> SATSolveResult:
         DPLL_SAT_solver = DpllSatSolver(map_size)
@@ -258,13 +256,11 @@ class LogicAgent:
     ) -> Assignment:
         return {abs(literal): literal > 0 for literal in confirmed_literals}
 
-    def _build_initial_formula(self) -> Formula:
+    def _build_formula_from_clues(self, clues: list[Clue]) -> Formula:
         formula: Formula = []
 
-        for index in self.level.get_initially_revealed_region():
-            person = self.level.get_person(index)
-            formula.append([index if person.get_is_criminal() else -index])
-            formula.extend(person.get_clue().to_cnf())
+        for clue in clues:
+            formula.extend(clue.to_cnf())
 
         return formula
 

@@ -16,7 +16,7 @@ class Level:
     def __init__(
         self,
         map: list[list[Person]],
-        initially_revealed_region: list[int],
+        initially_revealed_region: set[int],
     ) -> None:
         self.map = map
         self.initially_revealed_region = initially_revealed_region
@@ -33,7 +33,7 @@ class Level:
 
         return self.map[row][col]
 
-    def get_initially_revealed_region(self) -> list[int]:
+    def get_initially_revealed_region(self) -> set[int]:
         return self.initially_revealed_region
 
     def describe_person(self, index: int) -> tuple[str, str, str]:

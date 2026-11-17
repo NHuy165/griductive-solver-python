@@ -1,5 +1,5 @@
 from src.game.clue.clue import Clue
-from src.game.core.core_types.miscellaneous import Formula
+from src.game.core.core_types.miscellaneous import Assignment, Formula
 from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.core.level import Level
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
@@ -9,6 +9,29 @@ from src.game.logic.sat_caller import SATCaller
 class GameEngine:
     def __init__(self, level: Level) -> None:
         self.level = level
+
+    def get_map_size(self) -> int:
+        return self.level.get_map_size()
+
+    def get_initially_revealed_region(self) -> set[int]:
+        return self.level.get_initially_revealed_region().copy()
+
+    def get_initially_revealed_assignments(self) -> Assignment:
+        assignment: Assignment = {
+            index: self.level.get_person(index).get_is_criminal()
+            for index in self.level.get_initially_revealed_region()
+        }
+        return assignment
+
+    def get_initial_formula(self) -> Formula:
+        formula: Formula = []
+
+        for index in self.get_initially_revealed_region():
+            person = self.level.get_person(index)
+            formula.append([index if person.get_is_criminal() else -index])
+            formula.extend(person.get_clue().to_cnf())
+
+        return formula
 
     def validate_verdict_and_provide_clue_if_correct(
         self, formula: Formula, index: int, is_criminal_prediction: bool
