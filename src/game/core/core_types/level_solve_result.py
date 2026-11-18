@@ -1,8 +1,15 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from src.game.clue.clue import Clue
 from src.game.core.core_types.assignment_result import AssignmentResult
 from src.game.core.core_types.miscellaneous import Assignment, Formula
+
+
+class LevelSolveStatus(str, Enum):
+    SUCCESS = "SUCCESS"
+    STUCK = "STUCK"
+    INCONSISTENT = "INCONSISTENT"
 
 
 @dataclass
@@ -18,5 +25,6 @@ class LevelSolveStepResult:
 
 @dataclass
 class LevelSolveResult:
+    status: LevelSolveStatus
     final_assignment: Assignment
     solve_steps: list[LevelSolveStepResult]

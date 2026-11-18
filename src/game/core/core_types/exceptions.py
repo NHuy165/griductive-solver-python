@@ -1,0 +1,2 @@
+class ExceptionBrokenClues(Exception):
+    pass

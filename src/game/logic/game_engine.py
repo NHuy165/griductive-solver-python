@@ -1,5 +1,7 @@
 from src.game.clue.clue import Clue
+from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.miscellaneous import Assignment, Formula
+from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.core.level import Level
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
@@ -39,27 +41,37 @@ class GameEngine:
         index_was_assigned_criminal = self._get_possible_index_assignment(
             formula, index
         )
-        is_criminal = SATCaller.SAT_call(
+        # Assumes the formula is consistent, throws an error if not.
+        if index_was_assigned_criminal is None:
+            raise ExceptionBrokenClues("Clues are inconsistent.")
+
+        SAT_call_result = SATCaller.SAT_call(
             formula,
             index,
             was_criminal_in_one_possible_assignment=index_was_assigned_criminal,
         )
 
-        if is_criminal is None:
+        if SAT_call_result == SATCallResult.UNKNOWN:
             return VerdictResult.NOT_PROVABLE, None
 
-        if is_criminal != is_criminal_prediction:
-            return VerdictResult.CONTRADICTED, None
+        expected = (
+            SATCallResult.CRIMINAL if is_criminal_prediction else SATCallResult.INNOCENT
+        )
+        if SAT_call_result == expected:
+            return VerdictResult.CORRECT, self.level.get_person(index).get_clue()
+        return VerdictResult.CONTRADICTED, None
 
-        return VerdictResult.CORRECT, self.level.get_person(index).get_clue()
-
-    def _get_possible_index_assignment(self, formula: Formula, index: int) -> bool:
+    def _get_possible_index_assignment(
+        self, formula: Formula, index: int
+    ) -> bool | None:
         DPLL_SAT_solver = DpllSatSolver(self.level.get_map_size())
 
         SAT_result = DPLL_SAT_solver.SAT_solve(formula)
-        assert SAT_result.is_SAT is True
-        assert SAT_result.possible_assignment is not None
 
+        if not SAT_result.is_SAT:
+            return None
+
+        assert SAT_result.possible_assignment is not None
         index_was_assigned_criminal = SAT_result.possible_assignment[index]
 
         return index_was_assigned_criminal

@@ -3,14 +3,16 @@ from time import perf_counter
 
 from src.game.clue.clue import Clue
 from src.game.core.core_types.assignment_result import AssignmentResult
+from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.level_solve_result import (
     LevelSolveResult,
+    LevelSolveStatus,
     LevelSolveStepResult,
 )
 from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
+from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.core.core_types.SAT_solve_result import SATSolveResult
 from src.game.core.core_types.verdict_result import VerdictResult
-from src.game.core.level import Level
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.game_engine import GameEngine
 from src.game.logic.sat_caller import SATCaller
@@ -44,6 +46,7 @@ class LogicAgent:
 
         unconfirmed_indices = indices - set(classified_indices)
         assert SAT_solve_result.possible_assignment is not None
+
         indices_classified_with_SAT_calls = self._use_SAT_calls_to_assign_indices(
             indices=sorted(unconfirmed_indices),
             formula=formula,
@@ -75,15 +78,16 @@ class LogicAgent:
         indices = self._get_indices_in_formula(formula)
         unflipped_indices = indices - set(flipped)
         if len(unflipped_indices) == 0:
-            raise ValueError(
+            raise ExceptionBrokenClues(
                 "No more people can be classified from the current information."
             )
 
-        for index in self.assign_from_formula(formula).assignment:
+        assignment_result = self.assign_from_formula(formula)
+        for index in assignment_result.assignment:
             if index in unflipped_indices:
                 return index
 
-        raise ValueError(
+        raise ExceptionBrokenClues(
             "No more people can be classified from the current information."
         )
 
@@ -104,13 +108,23 @@ class LogicAgent:
 
         if len(flipped) == self.engine.get_map_size():
             return LevelSolveResult(
+                status=LevelSolveStatus.SUCCESS,
                 final_assignment=final_assignment,
                 solve_steps=solve_steps,
             )
 
         while len(flipped) < self.engine.get_map_size():
-            full_assignment_result = self.assign_from_formula(formula)
+            try:
+                full_assignment_result = self.assign_from_formula(formula)
+            except ExceptionBrokenClues:
+                return LevelSolveResult(
+                    status=LevelSolveStatus.INCONSISTENT,
+                    final_assignment=final_assignment,
+                    solve_steps=solve_steps,
+                )
+
             confirmed_assignments = full_assignment_result.assignment
+            final_assignment.update(confirmed_assignments)
             unflipped_confirmed_assignments = (
                 self._remove_flipped_from_confirmed_assignments(
                     confirmed_assignments, flipped
@@ -118,9 +132,12 @@ class LogicAgent:
             )
 
             if len(unflipped_confirmed_assignments) == 0:
-                raise ValueError(
-                    "No further person can be confirmed with the current clues."
+                return LevelSolveResult(
+                    status=LevelSolveStatus.STUCK,
+                    final_assignment=final_assignment,
+                    solve_steps=solve_steps,
                 )
+
             final_assignment.update(unflipped_confirmed_assignments)
 
             revealed_clues = self._flip_people_and_collect_clues(
@@ -146,7 +163,11 @@ class LogicAgent:
             )
             flipped.update(unflipped_confirmed_assignments)
 
-        return LevelSolveResult(final_assignment, solve_steps)
+        return LevelSolveResult(
+            LevelSolveStatus.SUCCESS,
+            final_assignment,
+            solve_steps,
+        )
 
     def unique_check(self, formula: Formula) -> bool:
         DPLL_SAT_solver = DpllSatSolver(self.engine.get_map_size())
@@ -200,14 +221,14 @@ class LogicAgent:
         classified_people: Assignment = {}
 
         for index in sorted(indices):
-            is_criminal = SATCaller.SAT_call(
+            SAT_call_result = SATCaller.SAT_call(
                 formula,
                 index,
                 was_criminal_in_one_possible_assignment=possible_assignment[index],
             )
 
-            if is_criminal is not None:
-                classified_people[index] = is_criminal
+            if SAT_call_result != SATCallResult.UNKNOWN:
+                classified_people[index] = SAT_call_result == SATCallResult.CRIMINAL
 
         return classified_people
 
@@ -245,7 +266,8 @@ class LogicAgent:
 
         SAT_result = DPLL_SAT_solver.SAT_solve(formula)
 
-        assert SAT_result.is_SAT is True
+        if not SAT_result.is_SAT:
+            raise ExceptionBrokenClues("Clues are inconsistent.")
         assert SAT_result.confirmed_literals is not None
         assert SAT_result.possible_assignment is not None
 
