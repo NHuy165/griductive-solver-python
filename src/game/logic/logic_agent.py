@@ -12,7 +12,6 @@ from src.game.core.core_types.level_solve_result import (
 from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
 from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.core.core_types.SAT_solve_result import SATSolveResult
-from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.game_engine import GameEngine
 from src.game.logic.sat_caller import SATCaller
@@ -145,7 +144,7 @@ class LogicAgent:
             final_assignment.update(unflipped_confirmed_assignments)
 
             revealed_clues = self._flip_people_and_collect_clues(
-                formula, unflipped_confirmed_assignments
+                list(unflipped_confirmed_assignments.keys())
             )
 
             step_assignment_result = self._remove_flipped_from_assignment_result(
@@ -250,17 +249,13 @@ class LogicAgent:
 
     def _flip_people_and_collect_clues(
         self,
-        formula: Formula,
-        unflipped_confirmed_assignments: Assignment,
+        unflipped_confirmed_indices: list[int],
     ) -> list[Clue]:
         revealed_clues: list[Clue] = []
 
-        for index, is_criminal in unflipped_confirmed_assignments.items():
-            verdict, clue = self.engine.validate_verdict_and_provide_clue_if_correct(
-                formula, index, is_criminal
-            )
+        for index in unflipped_confirmed_indices:
+            clue = self.engine.reveal_clue(index)
 
-            assert verdict == VerdictResult.CORRECT
             assert clue is not None
             revealed_clues.append(clue)
 

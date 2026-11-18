@@ -35,6 +35,9 @@ class GameEngine:
 
         return formula
 
+    def reveal_clue(self, index: int) -> Clue:
+        return self.level.get_person(index).get_clue()
+
     def validate_verdict_and_provide_clue_if_correct(
         self, formula: Formula, index: int, is_criminal_prediction: bool
     ) -> tuple[VerdictResult, Clue | None]:
