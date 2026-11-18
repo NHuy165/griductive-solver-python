@@ -65,11 +65,13 @@ class LogicAgent:
             unconfirmed_indices - set(indices_classified_with_SAT_calls)
         )
 
+        assert SAT_solve_result.events is not None
         return AssignmentResult(
             indices_confirmed_by_propagation=indices_confirmed_by_propagation,
             indices_confirmed_by_SAT_calls=indices_confirmed_by_SAT_calls,
             indices_unknown_by_SAT_calls=indices_unknown_by_SAT_calls,
-            assignment=classified_indices,
+            events_to_reach_possible_assignment=SAT_solve_result.events,
+            confirmed_assignments=classified_indices,
         )
 
     def get_hint(self, formula: Formula, flipped: set[int]) -> int:
@@ -83,7 +85,7 @@ class LogicAgent:
             )
 
         assignment_result = self.assign_from_formula(formula)
-        for index in assignment_result.assignment:
+        for index in assignment_result.confirmed_assignments:
             if index in unflipped_indices:
                 return index
 
@@ -123,8 +125,10 @@ class LogicAgent:
                     solve_steps=solve_steps,
                 )
 
-            confirmed_assignments = full_assignment_result.assignment
-            final_assignment.update(confirmed_assignments)
+            confirmed_assignments = full_assignment_result.confirmed_assignments
+            final_assignment.update(
+                confirmed_assignments
+            )  # Includes overlapping assignments, but doesn't matter
             unflipped_confirmed_assignments = (
                 self._remove_flipped_from_confirmed_assignments(
                     confirmed_assignments, flipped
@@ -203,12 +207,13 @@ class LogicAgent:
             set(assignment_result.indices_unknown_by_SAT_calls) - flipped
         )
         assignment = self._remove_flipped_from_confirmed_assignments(
-            assignment_result.assignment, flipped
+            assignment_result.confirmed_assignments, flipped
         )
         return AssignmentResult(
             indices_confirmed_by_propagation,
             indices_confirmed_by_SAT_calls,
             indices_unknown_by_SAT_calls,
+            assignment_result.events_to_reach_possible_assignment,
             assignment,
         )
 

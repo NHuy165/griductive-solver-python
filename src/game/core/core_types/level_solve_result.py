@@ -20,7 +20,9 @@ class LevelSolveStepResult:
     revealed_clues: list[Clue]
 
     def __post_init__(self) -> None:
-        assert len(self.revealed_clues) == len(self.assignment_result.assignment)
+        assert len(self.revealed_clues) == len(
+            self.assignment_result.confirmed_assignments
+        )
 
 
 @dataclass
