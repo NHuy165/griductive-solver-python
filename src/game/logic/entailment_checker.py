@@ -1,4 +1,7 @@
-from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
+from src.game.core.core_types.entailment_check_result import (
+    EntailmentCheckResult,
+    EntailmentCheckStatus,
+)
 from src.game.core.core_types.miscellaneous import Formula
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 
@@ -47,12 +50,14 @@ class EntailmentChecker:
         SAT_result = DPLL_SAT_solver.SAT_solve(formula_with_opposite)
 
         if SAT_result.is_SAT:
-            return EntailmentCheckResult.UNKNOWN
+            return EntailmentCheckResult(
+                EntailmentCheckStatus.UNKNOWN, SAT_result.events
+            )
 
-        result = (
-            EntailmentCheckResult.CRIMINAL
+        status = (
+            EntailmentCheckStatus.CRIMINAL
             if was_criminal_in_one_possible_assignment
-            else EntailmentCheckResult.INNOCENT
+            else EntailmentCheckStatus.INNOCENT
         )
 
-        return result
+        return EntailmentCheckResult(status, SAT_result.events)

@@ -27,12 +27,12 @@ class DpllSatSolver:
 
         root_propagation = self._propagate_and_extract_implied_literals(formula)
         if root_propagation is None:
-            return SATSolveResult(False, None, None, None)
+            return self._UNSAT_result_builder()
         propagated_formula, confirmed_literals = root_propagation
 
         solve_result = self._solve(propagated_formula)
         if solve_result is None:
-            return SATSolveResult(False, None, None, None)
+            return self._UNSAT_result_builder()
         decided_literals = solve_result
 
         result = self._SAT_result_builder(confirmed_literals, decided_literals)
@@ -55,6 +55,14 @@ class DpllSatSolver:
         )
 
         return result
+
+    def _UNSAT_result_builder(self) -> SATSolveResult:
+        return SATSolveResult(
+            is_SAT=False,
+            confirmed_literals=None,
+            possible_assignment=None,
+            events=self.events.copy(),
+        )
 
     def _propagate_and_extract_implied_literals(
         self, formula: Formula

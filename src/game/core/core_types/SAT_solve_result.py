@@ -18,4 +18,4 @@ class SATSolveResult:
     is_SAT: bool
     confirmed_literals: list[int] | None
     possible_assignment: Assignment | None
-    events: SATSolveEvents | None
+    events: SATSolveEvents

@@ -1,5 +1,7 @@
 from src.game.clue.clue import Clue
-from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
+from src.game.core.core_types.entailment_check_result import (
+    EntailmentCheckStatus,
+)
 from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.miscellaneous import Assignment, Formula
 from src.game.core.core_types.verdict_result import VerdictResult
@@ -48,21 +50,21 @@ class GameEngine:
         if index_was_assigned_criminal is None:
             raise ExceptionBrokenClues("Clues are inconsistent.")
 
-        entailment_check_result = EntailmentChecker.entailment_check(
+        entailment_check_status = EntailmentChecker.entailment_check(
             formula,
             index,
             was_criminal_in_one_possible_assignment=index_was_assigned_criminal,
-        )
+        ).status
 
-        if entailment_check_result == EntailmentCheckResult.UNKNOWN:
+        if entailment_check_status == EntailmentCheckStatus.UNKNOWN:
             return VerdictResult.NOT_PROVABLE, None
 
         expected = (
-            EntailmentCheckResult.CRIMINAL
+            EntailmentCheckStatus.CRIMINAL
             if is_criminal_prediction
-            else EntailmentCheckResult.INNOCENT
+            else EntailmentCheckStatus.INNOCENT
         )
-        if entailment_check_result == expected:
+        if entailment_check_status == expected:
             return VerdictResult.CORRECT, self.level.get_person(index).get_clue()
         return VerdictResult.CONTRADICTED, None
 

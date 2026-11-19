@@ -3,7 +3,9 @@ from time import perf_counter
 
 from src.game.clue.clue import Clue
 from src.game.core.core_types.assignment_result import AssignmentResult
-from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
+from src.game.core.core_types.entailment_check_result import (
+    EntailmentCheckStatus,
+)
 from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.level_solve_result import (
     LevelSolveResult,
@@ -11,7 +13,7 @@ from src.game.core.core_types.level_solve_result import (
     LevelSolveStepResult,
 )
 from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
-from src.game.core.core_types.SAT_solve_result import SATSolveResult
+from src.game.core.core_types.SAT_solve_result import SATSolveEvents, SATSolveResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 from src.game.logic.entailment_checker import EntailmentChecker
 from src.game.logic.game_engine import GameEngine
@@ -52,7 +54,7 @@ class LogicAgent:
             SAT_solve_result.confirmed_literals
         )
 
-        assignments_confirmed_with_entailment_checks = (
+        assignments_confirmed_with_entailment_checks, events_in_entailment_checks = (
             self._use_entailment_checks_to_probe(
                 formula=formula,
                 indices_in_formula=indices_in_formula,
@@ -66,6 +68,7 @@ class LogicAgent:
         return self._build_assignment_result(
             indices_in_formula=indices_in_formula,
             SAT_solve_result=SAT_solve_result,
+            events_in_entailment_checks=events_in_entailment_checks,
             confirmed_assignments=confirmed_assignments,
         )
 
@@ -149,6 +152,7 @@ class LogicAgent:
         self,
         indices_in_formula: set[int],
         SAT_solve_result: SATSolveResult,
+        events_in_entailment_checks: dict[int, SATSolveEvents],
         confirmed_assignments: Assignment,
     ) -> AssignmentResult:
         assert SAT_solve_result.confirmed_literals is not None
@@ -169,6 +173,7 @@ class LogicAgent:
             indices_confirmed_by_entailment_checks=indices_confirmed_by_entailment_checks,
             indices_unknown_by_entailment_checks=indices_unknown_by_entailment_checks,
             events_to_reach_possible_assignment=SAT_solve_result.events,
+            events_in_entailment_checks=events_in_entailment_checks,
             confirmed_assignments=confirmed_assignments,
         )
 
@@ -221,10 +226,10 @@ class LogicAgent:
             set(assignment_result.indices_confirmed_by_propagation) - flipped
         )
         indices_confirmed_by_entailment_checks = sorted(
-            set(assignment_result.indices_confirmed_by_entailment_checks) - flipped
+            assignment_result.indices_confirmed_by_entailment_checks
         )
         indices_unknown_by_entailment_checks = sorted(
-            set(assignment_result.indices_unknown_by_entailment_checks) - flipped
+            assignment_result.indices_unknown_by_entailment_checks
         )
         assignment = self._remove_flipped_from_confirmed_assignments(
             assignment_result.confirmed_assignments, flipped
@@ -234,6 +239,7 @@ class LogicAgent:
             indices_confirmed_by_entailment_checks,
             indices_unknown_by_entailment_checks,
             assignment_result.events_to_reach_possible_assignment,
+            assignment_result.events_in_entailment_checks,
             assignment,
         )
 
@@ -243,13 +249,14 @@ class LogicAgent:
         indices_in_formula: set[int],
         confirmed_indices: set[int],
         SAT_solve_result: SATSolveResult,
-    ) -> Assignment:
+    ) -> tuple[Assignment, dict[int, SATSolveEvents]]:
         classified_people: Assignment = {}
         assert SAT_solve_result.possible_assignment is not None
         indices_to_probe = (
             set(SAT_solve_result.possible_assignment).intersection(indices_in_formula)
             - confirmed_indices
         )
+        probe_events: dict[int, SATSolveEvents] = {}
 
         for index in sorted(indices_to_probe):
             entailment_check_result = EntailmentChecker.entailment_check(
@@ -260,12 +267,14 @@ class LogicAgent:
                 ],
             )
 
-            if entailment_check_result != EntailmentCheckResult.UNKNOWN:
+            if entailment_check_result.status != EntailmentCheckStatus.UNKNOWN:
                 classified_people[index] = (
-                    entailment_check_result == EntailmentCheckResult.CRIMINAL
+                    entailment_check_result.status == EntailmentCheckStatus.CRIMINAL
                 )
+            probe_events[index] = entailment_check_result.events
+        assert len(probe_events) == len(indices_to_probe)
 
-        return classified_people
+        return classified_people, probe_events
 
     def _remove_flipped_from_confirmed_assignments(
         self, confirmed_assignments: Assignment, flipped: set[int]
