@@ -15,6 +15,12 @@ class ImpliesClue(Clue):
     def get_region(self) -> list[int]:
         return list(set(self.region + self.conclusion.get_region()))
 
+    def get_auxiliary_count(self) -> int:
+        return self.conclusion.get_auxiliary_count()
+
+    def set_first_auxiliary_index(self, first_auxiliary_index: int) -> None:
+        self.conclusion.set_first_auxiliary_index(first_auxiliary_index)
+
     def to_cnf(self) -> Formula:
         index = self.region[0]
         negated_premise_literal = -index if self.is_criminal else index

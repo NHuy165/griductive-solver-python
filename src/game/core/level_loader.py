@@ -12,6 +12,7 @@ from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
 from src.game.clue.concrete_clues.implies_clue import ImpliesClue
+from src.game.clue.concrete_clues.parity_clue import ParityClue
 from src.game.clue.concrete_clues.same_clue import SameClue
 from src.game.core.core_types.exceptions import ExceptionInvalidLevel
 from src.game.core.core_types.level_solve_result import LevelSolveStatus
@@ -36,6 +37,7 @@ CLUE_BUILDERS: dict[ClueType, Callable[[dict[str, Any]], Clue]] = {
     ClueType.COMPARE: lambda c: CompareClue(
         c["region"], c["other_region"], c["equals"]
     ),
+    ClueType.PARITY: lambda c: ParityClue(c["region"], c["is_odd"]),
 }
 
 
@@ -61,9 +63,19 @@ class LevelLoader:
     def _load_level_from_data(cls, data: dict[str, Any]) -> Level:
         size = data["size"]
         people = [cls._build_person(person_data) for person_data in data["people"]]
+        cls._assign_auxiliary_indices(people, size**2)
         map_rows = [people[row * size : (row + 1) * size] for row in range(size)]
 
         return Level(map_rows, set(data["initially_revealed"]))
+
+    @classmethod
+    def _assign_auxiliary_indices(cls, people: list[Person], map_size: int) -> None:
+        next_auxiliary_index = map_size + 1
+
+        for person in people:
+            clue = person.get_clue()
+            clue.set_first_auxiliary_index(next_auxiliary_index)
+            next_auxiliary_index += clue.get_auxiliary_count()
 
     @classmethod
     def _validate_basic(cls, level: Level) -> bool:

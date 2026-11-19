@@ -10,3 +10,4 @@ class ClueType(str, Enum):
     AT_MOST = "AT_MOST"
     IMPLIES = "IMPLIES"
     COMPARE = "COMPARE"
+    PARITY = "PARITY"

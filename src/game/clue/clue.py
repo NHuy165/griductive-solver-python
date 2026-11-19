@@ -16,6 +16,12 @@ class Clue(ABC):
     def get_type(self) -> ClueType:
         return self.type
 
+    def get_auxiliary_count(self) -> int:
+        return 0
+
+    def set_first_auxiliary_index(self, first_auxiliary_index: int) -> None:
+        pass
+
     @abstractmethod
     def to_cnf(self) -> Formula:
         pass

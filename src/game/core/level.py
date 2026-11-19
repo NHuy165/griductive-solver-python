@@ -10,6 +10,7 @@ from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
 from src.game.clue.concrete_clues.implies_clue import ImpliesClue
+from src.game.clue.concrete_clues.parity_clue import ParityClue
 from src.game.clue.concrete_clues.same_clue import SameClue
 from src.game.core.person import Person
 
@@ -35,6 +36,12 @@ class Level:
 
         return self.map[row][col]
 
+    def get_auxiliary_count(self) -> int:
+        return sum(
+            self.get_person(index).get_clue().get_auxiliary_count()
+            for index in range(1, self.get_map_size() + 1)
+        )
+
     def get_initially_revealed_region(self) -> set[int]:
         return self.initially_revealed_region
 
@@ -56,6 +63,7 @@ class Level:
             ClueType.AT_MOST: self._describe_at_most_clue,
             ClueType.IMPLIES: self._describe_implies_clue,
             ClueType.COMPARE: self._describe_compare_clue,
+            ClueType.PARITY: self._describe_parity_clue,
         }
         describer = CLUE_DESCRIPTION_MAP[clue.get_type()]
 
@@ -117,6 +125,13 @@ class Level:
             return f"Among {names} and among {other_names}, the same number of people are criminals."
 
         return f"More people among {names} are criminals than among {other_names}."
+
+    def _describe_parity_clue(self, clue: Clue) -> str:
+        parity_clue = cast(ParityClue, clue)
+        names = self._join_names(parity_clue.region)
+        parity = "odd" if parity_clue.is_odd else "even"
+
+        return f"An {parity} number of people among {names} are criminals."
 
     def _join_names(self, region: list[int]) -> str:
         names = [self._get_name(index) for index in region]

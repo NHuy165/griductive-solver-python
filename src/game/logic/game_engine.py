@@ -20,6 +20,9 @@ class GameEngine:
     def get_initially_revealed_region(self) -> set[int]:
         return self.level.get_initially_revealed_region().copy()
 
+    def get_auxiliary_count(self) -> int:
+        return self.level.get_auxiliary_count()
+
     def get_initially_revealed_assignments(self) -> Assignment:
         assignment: Assignment = {
             index: self.level.get_person(index).get_is_criminal()
