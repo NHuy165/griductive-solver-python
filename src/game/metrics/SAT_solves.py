@@ -6,8 +6,8 @@ def count_SAT_solves_from_assignment_result(
     assignment_result: AssignmentResult,
 ) -> int:
     return (
-        len(assignment_result.non_auxiliary_indices_confirmed_by_entailment_checks)
-        + len(assignment_result.non_auxiliary_indices_unknown_by_entailment_checks)
+        len(assignment_result.non_auxi_indices_confirmed_entailment)
+        + len(assignment_result.non_auxi_indices_unknown_entailment)
         + 1
     )
 

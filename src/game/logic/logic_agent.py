@@ -52,13 +52,8 @@ class LogicAgent:
         )
 
         assert SAT_solve_result.confirmed_literals is not None
-        confirmed_non_auxiliary_literals = [
-            literal
-            for literal in SAT_solve_result.confirmed_literals
-            if not self._is_auxiliary_literal(literal)
-        ]
-        confirmed_assignments = self._convert_literals_to_assignment(
-            confirmed_non_auxiliary_literals
+        confirmed_assignments = self._convert_non_auxiliary_literals_to_assignment(
+            SAT_solve_result.confirmed_literals
         )
 
         assignments_confirmed_with_entailment_checks, events_in_entailment_checks = (
@@ -75,7 +70,6 @@ class LogicAgent:
         return self._build_assignment_result(
             non_auxiliary_indices_in_formula=non_auxiliary_indices_in_formula,
             SAT_solve_result=SAT_solve_result,
-            non_auxiliary_literals_confirmed_by_propagation=confirmed_non_auxiliary_literals,
             events_in_entailment_checks=events_in_entailment_checks,
             confirmed_assignments=confirmed_assignments,
         )
@@ -139,11 +133,7 @@ class LogicAgent:
         possible_assignment = SAT_solve_result.possible_assignment
         assert possible_assignment is not None
 
-        person_assignment = {
-            index: value
-            for index, value in possible_assignment.items()
-            if not self._is_auxiliary_literal(index)
-        }
+        person_assignment = self._remove_auxiliary_from_assignment(possible_assignment)
         assert len(person_assignment) == self.engine.get_map_size()
 
         counter_clause: Clause = [
@@ -168,17 +158,15 @@ class LogicAgent:
         self,
         non_auxiliary_indices_in_formula: set[int],
         SAT_solve_result: SATSolveResult,
-        non_auxiliary_literals_confirmed_by_propagation: list[int],
         events_in_entailment_checks: dict[int, SATSolveEvents],
         confirmed_assignments: Assignment,
     ) -> AssignmentResult:
         assert SAT_solve_result.confirmed_literals is not None
 
         non_auxiliary_indices_confirmed_by_propagation = sorted(
-            [
-                abs(literal)
-                for literal in non_auxiliary_literals_confirmed_by_propagation
-            ]
+            self._convert_non_auxiliary_literals_to_assignment(
+                SAT_solve_result.confirmed_literals
+            )
         )
         non_auxiliary_indices_confirmed_by_entailment_checks = sorted(
             set(confirmed_assignments)
@@ -245,14 +233,13 @@ class LogicAgent:
         self, assignment_result: AssignmentResult, flipped: set[int]
     ) -> AssignmentResult:
         indices_confirmed_by_propagation = sorted(
-            set(assignment_result.non_auxiliary_indices_confirmed_by_propagation)
-            - flipped
+            set(assignment_result.non_auxi_indices_confirmed_propagation) - flipped
         )
         indices_confirmed_by_entailment_checks = sorted(
-            assignment_result.non_auxiliary_indices_confirmed_by_entailment_checks
+            assignment_result.non_auxi_indices_confirmed_entailment
         )
         indices_unknown_by_entailment_checks = sorted(
-            assignment_result.non_auxiliary_indices_unknown_by_entailment_checks
+            assignment_result.non_auxi_indices_unknown_entailment
         )
         assignment = self._remove_flipped_from_confirmed_assignments(
             assignment_result.confirmed_assignments, flipped
@@ -338,11 +325,20 @@ class LogicAgent:
 
         return SAT_result
 
-    def _convert_literals_to_assignment(
-        self, confirmed_non_auxiliary_literals: list[int]
+    def _convert_non_auxiliary_literals_to_assignment(
+        self, confirmed_literals: list[int]
     ) -> Assignment:
         return {
-            abs(literal): literal > 0 for literal in confirmed_non_auxiliary_literals
+            abs(literal): literal > 0
+            for literal in confirmed_literals
+            if not self._is_auxiliary_literal(literal)
+        }
+
+    def _remove_auxiliary_from_assignment(self, assignment: Assignment) -> Assignment:
+        return {
+            index: value
+            for index, value in assignment.items()
+            if not self._is_auxiliary_literal(index)
         }
 
     def _build_formula_from_clues(self, clues: list[Clue]) -> Formula:
