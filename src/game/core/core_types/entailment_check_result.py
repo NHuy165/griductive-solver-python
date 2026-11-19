@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class SATCallResult(str, Enum):
+class EntailmentCheckResult(str, Enum):
     CRIMINAL = "CRIMINAL"
     INNOCENT = "INNOCENT"
     UNKNOWN = "UNKNOWN"

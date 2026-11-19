@@ -3,6 +3,7 @@ from time import perf_counter
 
 from src.game.clue.clue import Clue
 from src.game.core.core_types.assignment_result import AssignmentResult
+from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
 from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.level_solve_result import (
     LevelSolveResult,
@@ -10,11 +11,10 @@ from src.game.core.core_types.level_solve_result import (
     LevelSolveStepResult,
 )
 from src.game.core.core_types.miscellaneous import Assignment, Clause, Formula
-from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.core.core_types.SAT_solve_result import SATSolveResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
+from src.game.logic.entailment_checker import EntailmentChecker
 from src.game.logic.game_engine import GameEngine
-from src.game.logic.sat_caller import SATCaller
 
 
 @dataclass
@@ -52,14 +52,16 @@ class LogicAgent:
             SAT_solve_result.confirmed_literals
         )
 
-        assignments_confirmed_with_SAT_calls = self._use_SAT_calls_to_probe(
-            formula=formula,
-            indices_in_formula=indices_in_formula,
-            confirmed_indices=set(confirmed_assignments),
-            SAT_solve_result=SAT_solve_result,
+        assignments_confirmed_with_entailment_checks = (
+            self._use_entailment_checks_to_probe(
+                formula=formula,
+                indices_in_formula=indices_in_formula,
+                confirmed_indices=set(confirmed_assignments),
+                SAT_solve_result=SAT_solve_result,
+            )
         )
 
-        confirmed_assignments.update(assignments_confirmed_with_SAT_calls)
+        confirmed_assignments.update(assignments_confirmed_with_entailment_checks)
 
         return self._build_assignment_result(
             indices_in_formula=indices_in_formula,
@@ -154,18 +156,18 @@ class LogicAgent:
         indices_confirmed_by_propagation = sorted(
             [abs(literal) for literal in SAT_solve_result.confirmed_literals]
         )
-        indices_confirmed_by_SAT_calls = sorted(
+        indices_confirmed_by_entailment_checks = sorted(
             set(confirmed_assignments) - set(indices_confirmed_by_propagation)
         )
-        indices_unknown_by_SAT_calls = sorted(
+        indices_unknown_by_entailment_checks = sorted(
             indices_in_formula - set(confirmed_assignments)
         )
 
         assert SAT_solve_result.events is not None
         return AssignmentResult(
             indices_confirmed_by_propagation=indices_confirmed_by_propagation,
-            indices_confirmed_by_SAT_calls=indices_confirmed_by_SAT_calls,
-            indices_unknown_by_SAT_calls=indices_unknown_by_SAT_calls,
+            indices_confirmed_by_entailment_checks=indices_confirmed_by_entailment_checks,
+            indices_unknown_by_entailment_checks=indices_unknown_by_entailment_checks,
             events_to_reach_possible_assignment=SAT_solve_result.events,
             confirmed_assignments=confirmed_assignments,
         )
@@ -218,24 +220,24 @@ class LogicAgent:
         indices_confirmed_by_propagation = sorted(
             set(assignment_result.indices_confirmed_by_propagation) - flipped
         )
-        indices_confirmed_by_SAT_calls = sorted(
-            set(assignment_result.indices_confirmed_by_SAT_calls) - flipped
+        indices_confirmed_by_entailment_checks = sorted(
+            set(assignment_result.indices_confirmed_by_entailment_checks) - flipped
         )
-        indices_unknown_by_SAT_calls = sorted(
-            set(assignment_result.indices_unknown_by_SAT_calls) - flipped
+        indices_unknown_by_entailment_checks = sorted(
+            set(assignment_result.indices_unknown_by_entailment_checks) - flipped
         )
         assignment = self._remove_flipped_from_confirmed_assignments(
             assignment_result.confirmed_assignments, flipped
         )
         return AssignmentResult(
             indices_confirmed_by_propagation,
-            indices_confirmed_by_SAT_calls,
-            indices_unknown_by_SAT_calls,
+            indices_confirmed_by_entailment_checks,
+            indices_unknown_by_entailment_checks,
             assignment_result.events_to_reach_possible_assignment,
             assignment,
         )
 
-    def _use_SAT_calls_to_probe(
+    def _use_entailment_checks_to_probe(
         self,
         formula: Formula,
         indices_in_formula: set[int],
@@ -250,7 +252,7 @@ class LogicAgent:
         )
 
         for index in sorted(indices_to_probe):
-            SAT_call_result = SATCaller.SAT_call(
+            entailment_check_result = EntailmentChecker.entailment_check(
                 formula,
                 index,
                 was_criminal_in_one_possible_assignment=SAT_solve_result.possible_assignment[
@@ -258,8 +260,10 @@ class LogicAgent:
                 ],
             )
 
-            if SAT_call_result != SATCallResult.UNKNOWN:
-                classified_people[index] = SAT_call_result == SATCallResult.CRIMINAL
+            if entailment_check_result != EntailmentCheckResult.UNKNOWN:
+                classified_people[index] = (
+                    entailment_check_result == EntailmentCheckResult.CRIMINAL
+                )
 
         return classified_people
 

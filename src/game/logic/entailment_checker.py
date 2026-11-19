@@ -1,27 +1,27 @@
+from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
 from src.game.core.core_types.miscellaneous import Formula
-from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
 
 
-class SATCaller:
+class EntailmentChecker:
     @classmethod
-    def SAT_call(
+    def entailment_check(
         cls,
         formula: Formula,
         index: int,
         was_criminal_in_one_possible_assignment: bool,
-    ) -> SATCallResult:
+    ) -> EntailmentCheckResult:
         # Assumes the base formula is consistent
 
         formula_with_opposite = cls._add_opposite_literal_to_formula(
             formula, index, was_criminal_in_one_possible_assignment
         )
 
-        SAT_call_result = cls._classify_index_using_SAT_solve(
+        entailment_check_result = cls._classify_index_using_SAT_solve(
             formula_with_opposite, was_criminal_in_one_possible_assignment
         )
 
-        return SAT_call_result
+        return entailment_check_result
 
     @classmethod
     def _add_opposite_literal_to_formula(
@@ -41,18 +41,18 @@ class SATCaller:
         cls,
         formula_with_opposite: Formula,
         was_criminal_in_one_possible_assignment: bool,
-    ) -> SATCallResult:
+    ) -> EntailmentCheckResult:
         DPLL_SAT_solver = DpllSatSolver(0)
 
         SAT_result = DPLL_SAT_solver.SAT_solve(formula_with_opposite)
 
         if SAT_result.is_SAT:
-            return SATCallResult.UNKNOWN
+            return EntailmentCheckResult.UNKNOWN
 
         result = (
-            SATCallResult.CRIMINAL
+            EntailmentCheckResult.CRIMINAL
             if was_criminal_in_one_possible_assignment
-            else SATCallResult.INNOCENT
+            else EntailmentCheckResult.INNOCENT
         )
 
         return result

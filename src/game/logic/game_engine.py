@@ -1,11 +1,11 @@
 from src.game.clue.clue import Clue
+from src.game.core.core_types.entailment_check_result import EntailmentCheckResult
 from src.game.core.core_types.exceptions import ExceptionBrokenClues
 from src.game.core.core_types.miscellaneous import Assignment, Formula
-from src.game.core.core_types.SAT_call_result import SATCallResult
 from src.game.core.core_types.verdict_result import VerdictResult
 from src.game.core.level import Level
 from src.game.logic.DPLL_SAT_solver import DpllSatSolver
-from src.game.logic.sat_caller import SATCaller
+from src.game.logic.entailment_checker import EntailmentChecker
 
 
 class GameEngine:
@@ -48,19 +48,21 @@ class GameEngine:
         if index_was_assigned_criminal is None:
             raise ExceptionBrokenClues("Clues are inconsistent.")
 
-        SAT_call_result = SATCaller.SAT_call(
+        entailment_check_result = EntailmentChecker.entailment_check(
             formula,
             index,
             was_criminal_in_one_possible_assignment=index_was_assigned_criminal,
         )
 
-        if SAT_call_result == SATCallResult.UNKNOWN:
+        if entailment_check_result == EntailmentCheckResult.UNKNOWN:
             return VerdictResult.NOT_PROVABLE, None
 
         expected = (
-            SATCallResult.CRIMINAL if is_criminal_prediction else SATCallResult.INNOCENT
+            EntailmentCheckResult.CRIMINAL
+            if is_criminal_prediction
+            else EntailmentCheckResult.INNOCENT
         )
-        if SAT_call_result == expected:
+        if entailment_check_result == expected:
             return VerdictResult.CORRECT, self.level.get_person(index).get_clue()
         return VerdictResult.CONTRADICTED, None
 
