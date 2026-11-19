@@ -7,6 +7,7 @@ from src.game.clue.clue import Clue
 from src.game.clue.clue_type import ClueType
 from src.game.clue.concrete_clues.at_least_clue import AtLeastClue
 from src.game.clue.concrete_clues.at_most_clue import AtMostClue
+from src.game.clue.concrete_clues.compare_clue import CompareClue
 from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
@@ -31,6 +32,9 @@ CLUE_BUILDERS: dict[ClueType, Callable[[dict[str, Any]], Clue]] = {
         c["region"],
         c["is_criminal"],
         CLUE_BUILDERS[ClueType(c["conclusion"]["type"])](c["conclusion"]),
+    ),
+    ClueType.COMPARE: lambda c: CompareClue(
+        c["region"], c["other_region"], c["equals"]
     ),
 }
 

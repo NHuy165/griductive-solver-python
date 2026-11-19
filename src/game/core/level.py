@@ -5,6 +5,7 @@ from src.game.clue.clue import Clue
 from src.game.clue.clue_type import ClueType
 from src.game.clue.concrete_clues.at_least_clue import AtLeastClue
 from src.game.clue.concrete_clues.at_most_clue import AtMostClue
+from src.game.clue.concrete_clues.compare_clue import CompareClue
 from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
@@ -54,6 +55,7 @@ class Level:
             ClueType.AT_LEAST: self._describe_at_least_clue,
             ClueType.AT_MOST: self._describe_at_most_clue,
             ClueType.IMPLIES: self._describe_implies_clue,
+            ClueType.COMPARE: self._describe_compare_clue,
         }
         describer = CLUE_DESCRIPTION_MAP[clue.get_type()]
 
@@ -105,6 +107,16 @@ class Level:
         conclusion = self._describe_clue(implies_clue.conclusion)
 
         return f"If {name} is {role}, then: {conclusion}"
+
+    def _describe_compare_clue(self, clue: Clue) -> str:
+        compare_clue = cast(CompareClue, clue)
+        names = self._join_names(compare_clue.region)
+        other_names = self._join_names(compare_clue.other_region)
+
+        if compare_clue.equals:
+            return f"Among {names} and among {other_names}, the same number of people are criminals."
+
+        return f"More people among {names} are criminals than among {other_names}."
 
     def _join_names(self, region: list[int]) -> str:
         names = [self._get_name(index) for index in region]
