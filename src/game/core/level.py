@@ -8,6 +8,7 @@ from src.game.clue.concrete_clues.at_most_clue import AtMostClue
 from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
+from src.game.clue.concrete_clues.implies_clue import ImpliesClue
 from src.game.clue.concrete_clues.same_clue import SameClue
 from src.game.core.person import Person
 
@@ -37,6 +38,14 @@ class Level:
         return self.initially_revealed_region
 
     def describe_person(self, index: int) -> tuple[str, str, str]:
+        person = self.get_person(index)
+        clue = person.get_clue()
+
+        described_clue = self._describe_clue(clue)
+
+        return (person.get_name(), person.get_occupation(), described_clue)
+
+    def _describe_clue(self, clue: Clue) -> str:
         CLUE_DESCRIPTION_MAP: dict[ClueType, Callable[[Clue], str]] = {
             ClueType.FACT: self._describe_fact_clue,
             ClueType.SAME: self._describe_same_clue,
@@ -44,14 +53,11 @@ class Level:
             ClueType.EXACTLY: self._describe_exactly_clue,
             ClueType.AT_LEAST: self._describe_at_least_clue,
             ClueType.AT_MOST: self._describe_at_most_clue,
+            ClueType.IMPLIES: self._describe_implies_clue,
         }
-
-        person = self.get_person(index)
-        clue = person.get_clue()
         describer = CLUE_DESCRIPTION_MAP[clue.get_type()]
-        described_clue = describer(clue)
 
-        return (person.get_name(), person.get_occupation(), described_clue)
+        return describer(clue)
 
     def _describe_fact_clue(self, clue: Clue) -> str:
         fact_clue = cast(FactClue, clue)
@@ -91,6 +97,14 @@ class Level:
         names = self._join_names(at_most_clue.region)
 
         return f"At most {at_most_clue.k} people among {names} are criminals."
+
+    def _describe_implies_clue(self, clue: Clue) -> str:
+        implies_clue = cast(ImpliesClue, clue)
+        name = self._get_name(implies_clue.region[0])
+        role = "a criminal" if implies_clue.is_criminal else "not a criminal"
+        conclusion = self._describe_clue(implies_clue.conclusion)
+
+        return f"If {name} is {role}, then: {conclusion}"
 
     def _join_names(self, region: list[int]) -> str:
         names = [self._get_name(index) for index in region]

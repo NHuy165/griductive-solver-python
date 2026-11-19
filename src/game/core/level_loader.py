@@ -10,6 +10,7 @@ from src.game.clue.concrete_clues.at_most_clue import AtMostClue
 from src.game.clue.concrete_clues.different_clue import DifferentClue
 from src.game.clue.concrete_clues.exactly_clue import ExactlyClue
 from src.game.clue.concrete_clues.fact_clue import FactClue
+from src.game.clue.concrete_clues.implies_clue import ImpliesClue
 from src.game.clue.concrete_clues.same_clue import SameClue
 from src.game.core.core_types.exceptions import ExceptionInvalidLevel
 from src.game.core.core_types.level_solve_result import LevelSolveStatus
@@ -26,6 +27,11 @@ CLUE_BUILDERS: dict[ClueType, Callable[[dict[str, Any]], Clue]] = {
     ClueType.EXACTLY: lambda c: ExactlyClue(c["region"], c["k"]),
     ClueType.AT_LEAST: lambda c: AtLeastClue(c["region"], c["k"]),
     ClueType.AT_MOST: lambda c: AtMostClue(c["region"], c["k"]),
+    ClueType.IMPLIES: lambda c: ImpliesClue(
+        c["region"],
+        c["is_criminal"],
+        CLUE_BUILDERS[ClueType(c["conclusion"]["type"])](c["conclusion"]),
+    ),
 }
 
 

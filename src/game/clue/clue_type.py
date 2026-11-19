@@ -8,3 +8,4 @@ class ClueType(str, Enum):
     EXACTLY = "EXACTLY"
     AT_LEAST = "AT_LEAST"
     AT_MOST = "AT_MOST"
+    IMPLIES = "IMPLIES"
