@@ -105,6 +105,24 @@ class LogicAgent:
     def solve_level(self) -> LevelSolveResult:
         state = self._initiate_solve_state()
 
+        return self._solve_state(state)
+
+    def solve_from_state(
+        self,
+        formula: Formula,
+        flipped: set[int],
+        assignment: Assignment,
+    ) -> LevelSolveResult:
+        state = LevelSolveState(
+            formula=list(formula),
+            flipped=set(flipped),
+            assignment=dict(assignment),
+            steps=[],
+        )
+
+        return self._solve_state(state)
+
+    def _solve_state(self, state: LevelSolveState) -> LevelSolveResult:
         while len(state.flipped) < self.engine.get_map_size():
             status = self._solve_step(state)
 

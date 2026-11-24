@@ -1,0 +1,202 @@
+{% macro icon(name, extra='') -%}
+<span class="icon {{ extra }}" style="--icon:url('{{ url_for('static', filename='assets/icons/' ~ name ~ '.svg') }}')" aria-hidden="true"></span>
+{%- endmacro %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E8F2F8">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='assets/icons/game-icons--duck.svg') }}">
+  <title>Griductive · Suy luận không đoán</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="app">
+    <main class="content">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Griductive - trang chủ">
+          <span class="brand-mark">{{ icon('game-icons--duck') }}</span>
+          <h1 class="brand-name">Griductive</h1>
+        </a>
+
+        <dl class="ledger" aria-label="Tiến độ màn chơi">
+          <div class="ledger-item ledger-item--revealed">
+            <dt>Đã lật</dt>
+            <dd id="stat-revealed">0</dd>
+          </div>
+          <div class="ledger-item ledger-item--remaining">
+            <dt>Còn úp</dt>
+            <dd id="stat-remaining">0</dd>
+          </div>
+          <div class="ledger-item ledger-item--steps">
+            <dt>Bước</dt>
+            <dd id="stat-steps">0</dd>
+          </div>
+        </dl>
+
+        <div class="header-actions">
+          <label class="level-picker" title="Chọn màn chơi">
+            <span class="level-picker-label">Màn</span>
+            <select id="level-select" aria-label="Chọn màn chơi"></select>
+          </label>
+          <button class="btn btn--primary" id="load-btn" type="button">Mở màn</button>
+          <button class="btn btn--quiet" id="restart-btn" type="button">Chơi lại</button>
+          <button class="btn btn--quiet" id="help-btn" type="button">Hướng dẫn</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <div class="board-wrap">
+          <div class="board" id="board" style="--n:3" data-size="3"></div>
+          <div class="board-status" id="board-status" hidden></div>
+        </div>
+
+        <aside class="side" aria-label="Bảng phán đoán">
+          <div class="side-stack">
+            <div class="sidebar-card action-tools">
+              <button class="tool-btn tool-btn--hint" id="hint-btn" type="button">
+                <span class="tool-icon">{{ icon('mdi--lightbulb-on') }}</span>
+                <span class="tool-copy"><b>Gợi ý</b></span>
+              </button>
+              <button class="tool-btn tool-btn--auto" id="auto-btn" type="button">
+                <span class="tool-icon">{{ icon('mdi--robot') }}</span>
+                <span class="tool-copy"><b>Tự động giải</b></span>
+              </button>
+            </div>
+
+            <section class="sidebar-card info-card">
+              <div class="panel-tabs" role="tablist" aria-label="Thông tin màn chơi">
+                <button class="tab-btn is-active" id="tab-clues-btn" type="button" role="tab"
+                        aria-selected="true" aria-controls="pane-clues" data-tab="clues">
+                  Manh mối <span class="tab-badge" id="clue-count">0</span>
+                </button>
+                <button class="tab-btn" id="tab-trace-btn" type="button" role="tab"
+                        aria-selected="false" aria-controls="pane-trace" data-tab="trace">
+                  Nhật ký <span class="tab-badge" id="trace-count">0</span>
+                </button>
+                <button class="tab-btn" id="tab-stats-btn" type="button" role="tab"
+                        aria-selected="false" aria-controls="pane-stats" data-tab="stats">
+                  Thông số SAT
+                </button>
+              </div>
+
+              <div class="tab-panes">
+                <div class="tab-pane is-active" id="pane-clues" role="tabpanel"
+                     aria-labelledby="tab-clues-btn" data-pane="clues">
+                  <div class="clue-list-wrap">
+                    <div class="clue-list" id="clue-list"></div>
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="pane-trace" role="tabpanel"
+                     aria-labelledby="tab-trace-btn" data-pane="trace" hidden>
+                  <div class="trace-list-wrap">
+                    <div class="trace-list" id="trace-list"></div>
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="pane-stats" role="tabpanel"
+                     aria-labelledby="tab-stats-btn" data-pane="stats" hidden>
+                  <div class="stats-grid" id="stats-grid"></div>
+                  <div class="auto-summary" id="auto-summary" hidden></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    <span id="toast-text"></span>
+  </div>
+
+  <div class="modal" id="help-modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="modal-head">
+        <div>
+          <span class="modal-stamp">LUẬT CHƠI</span>
+          <h2 id="help-title">Cách chơi</h2>
+        </div>
+        <button class="btn btn--quiet" type="button" data-close-modal>Đóng</button>
+      </div>
+
+      <div class="modal-lead-box">
+        <p class="modal-lead">
+          Mỗi ô là một nhân vật với vai trò bí mật: <b>Tội phạm</b> hoặc <b>Vô tội</b>.
+          Mọi manh mối đã lật đều đúng, kể cả khi chủ nhân của nó là tội phạm.
+          Bạn chỉ được kết luận khi trạng thái đó được suy ra chắc chắn từ những gì đang mở.
+        </p>
+      </div>
+
+      <div class="modal-grid-rules">
+        <ol class="rule-list">
+          <li>
+            <span class="rule-num">01</span>
+            <div><b>Chọn một lá úp</b><p>Nhấn vào nhân vật chưa lật. Tên và nghề nghiệp là thông tin công khai, còn vai trò và manh mối vẫn bị giấu.</p></div>
+          </li>
+          <li>
+            <span class="rule-num">02</span>
+            <div><b>Đưa ra phán đoán</b><p>Chọn <b>TỘI PHẠM</b> hoặc <b>VÔ TỘI</b>. Nếu chưa đủ căn cứ, game trả về <b>NOT_PROVABLE</b>; nếu ngược hướng, trả về <b>CONTRADICTED</b>.</p></div>
+          </li>
+          <li>
+            <span class="rule-num">03</span>
+            <div><b>Lật bài và mở rộng KB</b><p>Phán đoán đúng sẽ lật lá bài, công khai trạng thái và manh mối, đồng thời thêm chúng vào cơ sở tri thức.</p></div>
+          </li>
+          <li>
+            <span class="rule-num">04</span>
+            <div><b>Không đọc lời giải</b><p>Agent và giao diện chỉ dùng các manh mối đã lật. Gợi ý không đọc trạng thái bí mật của những lá còn úp.</p></div>
+          </li>
+        </ol>
+
+        <div class="modal-side-info">
+          <div class="formula-card">
+            <span class="formula-label">ĐIỀU KIỆN PHÁN ĐOÁN</span>
+            <div class="formula-item">
+              <span class="formula-target">TỘI PHẠM</span>
+              <code>KB ∧ ¬C<sub>i</sub> → UNSAT</code>
+            </div>
+            <div class="formula-item">
+              <span class="formula-target">VÔ TỘI</span>
+              <code>KB ∧ C<sub>i</sub> → UNSAT</code>
+            </div>
+            <p class="formula-desc">Chỉ khi giả định ngược lại dẫn tới mâu thuẫn thì kết luận mới được chấp nhận.</p>
+          </div>
+
+          <div class="modal-tip-card">
+            <span class="tip-stamp">MẸO</span>
+            <p>Nhấn vào một manh mối đã mở để tô sáng vùng mà nó nhắc đến. Gợi ý sẽ đánh dấu một nhân vật đã có thể kết luận; bạn vẫn tự chọn phán đoán.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="modal-section-title">Các loại manh mối</h3>
+      <table class="clue-table">
+        <tbody>
+          <tr><th>FACT</th><td>Một người có vai trò cho trước.</td></tr>
+          <tr><th>SAME</th><td>Hai người cùng vai trò.</td></tr>
+          <tr><th>DIFFERENT</th><td>Hai người khác vai trò.</td></tr>
+          <tr><th>EXACTLY k</th><td>Đúng k người trong vùng là tội phạm.</td></tr>
+          <tr><th>AT_LEAST k</th><td>Ít nhất k người là tội phạm.</td></tr>
+          <tr><th>AT_MOST k</th><td>Nhiều nhất k người là tội phạm.</td></tr>
+          <tr><th>IMPLIES</th><td>Nếu tiền đề đúng thì kết luận đúng.</td></tr>
+          <tr><th>COMPARE</th><td>So sánh số tội phạm giữa hai vùng.</td></tr>
+          <tr><th>PARITY</th><td>Số tội phạm là chẵn hoặc lẻ.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    window.__LEVELS__ = {{ levels_json|safe }};
+    window.__INITIAL_STATE__ = {{ initial_state_json|safe }};
+  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
