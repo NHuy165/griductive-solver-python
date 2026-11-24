@@ -1,0 +1,5 @@
+.continue/
+.vscode/
+.venv/
+.git/
+__pycache__/
