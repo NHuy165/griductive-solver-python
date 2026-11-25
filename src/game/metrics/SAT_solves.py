@@ -5,11 +5,13 @@ from src.game.core.core_types.level_solve_result import LevelSolveResult
 def count_SAT_solves_from_assignment_result(
     assignment_result: AssignmentResult,
 ) -> int:
-    return (
-        len(assignment_result.non_auxi_indices_confirmed_entailment)
-        + len(assignment_result.non_auxi_indices_unknown_entailment)
-        + 1
-    )
+    if assignment_result.successful:
+        return (
+            len(assignment_result.non_auxi_indices_confirmed_entailment)
+            + len(assignment_result.non_auxi_indices_unknown_entailment)
+            + 1
+        )
+    return 1
 
 
 def count_SAT_solves_from_level_solve(

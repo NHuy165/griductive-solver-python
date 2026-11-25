@@ -12,6 +12,7 @@ class AssignmentResult:
     events_to_reach_possible_assignment: SATSolveEvents
     events_in_entailment_checks: dict[int, SATSolveEvents]
     confirmed_assignments: Assignment
+    successful: bool
 
     def __post_init__(self) -> None:
         assert len(self.events_in_entailment_checks) == len(
