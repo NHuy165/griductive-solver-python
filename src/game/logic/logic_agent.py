@@ -47,9 +47,20 @@ class LogicAgent:
             formula
         )
         assert len(non_auxiliary_indices_in_formula) > 0
+
+        # SAT solve uses auxiliary indices
         SAT_solve_result = self._SAT_solve_formula(
             formula, max_index=self._get_max_index(formula)
         )
+
+        # When not SAT, only returns the events
+        if not SAT_solve_result.is_SAT:
+            return self._build_assignment_result(
+                non_auxiliary_indices_in_formula=set(),
+                SAT_solve_result=SAT_solve_result,
+                events_in_entailment_checks={},
+                confirmed_assignments={},
+            )
 
         assert SAT_solve_result.confirmed_literals is not None
         confirmed_assignments = self._convert_non_auxiliary_literals_to_assignment(
@@ -85,6 +96,9 @@ class LogicAgent:
             )
 
         assignment_result = self.assign_from_formula(formula)
+        if not assignment_result.successful:
+            raise ExceptionBrokenClues("Clues are contradictory.")
+
         for index in assignment_result.confirmed_assignments:
             if index in unflipped_indices:
                 return index
@@ -161,6 +175,17 @@ class LogicAgent:
         events_in_entailment_checks: dict[int, SATSolveEvents],
         confirmed_assignments: Assignment,
     ) -> AssignmentResult:
+        if not SAT_solve_result.is_SAT:
+            return AssignmentResult(
+                [],
+                [],
+                [],
+                SAT_solve_result.events,
+                {},
+                {},
+                False,
+            )
+
         assert SAT_solve_result.confirmed_literals is not None
 
         non_auxiliary_indices_confirmed_by_propagation = sorted(
@@ -185,12 +210,14 @@ class LogicAgent:
             events_to_reach_possible_assignment,
             events_in_entailment_checks,
             confirmed_assignments,
+            True,
         )
 
     def _solve_step(self, state: LevelSolveState) -> LevelSolveStatus | None:
-        try:
-            full_assignment_result = self.assign_from_formula(state.formula)
-        except ExceptionBrokenClues:
+        full_assignment_result = self.assign_from_formula(state.formula)
+
+        if not full_assignment_result.successful:
+            self._update_state(state, full_assignment_result)
             return LevelSolveStatus.INCONSISTENT
 
         step_assignment_result = self._remove_flipped_from_assignment_result(
@@ -198,10 +225,10 @@ class LogicAgent:
         )
 
         if len(step_assignment_result.confirmed_assignments) == 0:
+            self._update_state(state, step_assignment_result)
             return LevelSolveStatus.STUCK
 
         self._update_state(state, step_assignment_result)
-
         return None
 
     def _update_state(
@@ -251,6 +278,7 @@ class LogicAgent:
             assignment_result.events_to_reach_possible_assignment,
             assignment_result.events_in_entailment_checks,
             assignment,
+            assignment_result.successful,
         )
 
     def _use_entailment_checks_to_probe(
@@ -317,11 +345,6 @@ class LogicAgent:
         DPLL_SAT_solver = DpllSatSolver(max_index)
 
         SAT_result = DPLL_SAT_solver.SAT_solve(formula)
-
-        if not SAT_result.is_SAT:
-            raise ExceptionBrokenClues("Clues are inconsistent.")
-
-        assert SAT_result.possible_assignment is not None
 
         return SAT_result
 
