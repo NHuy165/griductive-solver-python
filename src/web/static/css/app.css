@@ -2305,3 +2305,222 @@ h1, h2, h3, h4 {
     font-size: 0.9rem;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Auto-solve replay: step bar, reason highlights
+   -------------------------------------------------------------------------- */
+
+.replay-bar {
+  margin-bottom: 18px;
+  border: var(--border-main);
+  box-shadow: var(--shadow-hard-sm);
+  background: var(--paper);
+}
+
+.replay-bar.is-paused {
+  background: var(--bauhaus-yellow-soft);
+}
+
+.replay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: var(--ink);
+}
+
+.replay-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #FFFFFF;
+}
+
+.replay-bar.is-paused .replay-stamp::after {
+  content: " · TẠM DỪNG";
+  color: var(--bauhaus-yellow);
+}
+
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.replay-btn,
+.replay-speed-btn {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: var(--surface);
+  color: var(--ink);
+  border: var(--border-thin);
+  cursor: pointer;
+}
+
+.replay-btn:hover,
+.replay-speed-btn:hover {
+  background: var(--surface-alt);
+}
+
+.replay-btn--primary {
+  background: var(--ocean-blue);
+  color: #FFFFFF;
+}
+
+.replay-btn--primary:hover {
+  background: var(--ocean-blue-dark);
+}
+
+.replay-speed {
+  display: inline-flex;
+}
+
+.replay-speed-btn + .replay-speed-btn {
+  border-left: none;
+}
+
+.replay-speed-btn.is-active {
+  background: var(--bauhaus-yellow);
+}
+
+.replay-title {
+  margin: 0;
+  padding: 12px 14px 4px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.replay-bar.is-done .replay-title {
+  padding-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.replay-verdict {
+  display: inline-block;
+  padding: 0 6px;
+  border: var(--border-thin);
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+.replay-verdict--criminal {
+  background: var(--criminal);
+}
+
+.replay-verdict--innocent {
+  background: var(--innocent);
+}
+
+.replay-kicker {
+  margin: 0;
+  padding: 0 14px 6px;
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--ink-secondary);
+}
+
+.replay-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.replay-reasons:empty {
+  display: none;
+}
+
+.replay-reasons li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: var(--border-thin);
+  border-left: 5px solid var(--bauhaus-yellow);
+}
+
+.replay-reason-owner {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+.replay-reason-text {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The card being concluded and the clue owners that justify it. */
+.cell.reason-target {
+  transform: translate(-3px, -3px);
+  box-shadow: 0 0 0 4px var(--bauhaus-yellow), var(--shadow-hard);
+}
+
+.cell.reason-target::after {
+  content: "ĐANG KẾT LUẬN";
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: var(--bauhaus-yellow);
+  color: var(--ink);
+  padding: 1px 4px;
+  border: var(--border-thin);
+}
+
+.cell.reason-owner {
+  box-shadow: 0 0 0 3px var(--ink), var(--shadow-hard);
+}
+
+.cell.reason-owner .cell-clue {
+  background: var(--bauhaus-yellow-soft);
+  border-top: 2px solid var(--ink);
+}
+
+.cell.reason-owner::after {
+  content: "LIÊN QUAN";
+  position: absolute;
+  top: 34px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--bauhaus-yellow);
+  padding: 1px 4px;
+}
+
+.clue-item.is-reason {
+  background: var(--bauhaus-yellow-soft);
+  border-left: 5px solid var(--bauhaus-yellow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.reason-target {
+    transform: none;
+  }
+}
+
+.replay-bar.is-done .replay-speed {
+  display: none;
+}

@@ -51,6 +51,26 @@
 
       <div class="workspace">
         <div class="board-wrap">
+          <section class="replay-bar" id="replay-bar" aria-live="polite" hidden>
+            <div class="replay-head">
+              <span class="replay-stamp" id="replay-stamp">AGENT</span>
+              <div class="replay-controls">
+                <button class="replay-btn" id="replay-toggle" type="button" title="Phím tắt: Space">Tạm dừng</button>
+                <button class="replay-btn" id="replay-next" type="button" title="Phím tắt: →">Bước tiếp</button>
+                <div class="replay-speed" role="group" aria-label="Tốc độ phát">
+                  <button class="replay-speed-btn" type="button" data-speed="0.5">0.5×</button>
+                  <button class="replay-speed-btn is-active" type="button" data-speed="1">1×</button>
+                  <button class="replay-speed-btn" type="button" data-speed="2">2×</button>
+                </div>
+                <button class="replay-btn" id="replay-skip" type="button">Bỏ qua</button>
+                <button class="replay-btn replay-btn--primary" id="replay-srt" type="button" hidden>Tải phụ đề .srt</button>
+                <button class="replay-btn" id="replay-close" type="button" hidden>Đóng</button>
+              </div>
+            </div>
+            <p class="replay-title" id="replay-title"></p>
+            <p class="replay-kicker" id="replay-kicker" hidden></p>
+            <ul class="replay-reasons" id="replay-reasons"></ul>
+          </section>
           <div class="board" id="board" style="--n:3" data-size="3"></div>
           <div class="board-status" id="board-status" hidden></div>
         </div>

@@ -19,6 +19,23 @@
   let winTimer = null;
   let flashToken = 0;
 
+  // Auto-solve replay: one card at a time, with the clues that force it.
+  const REPLAY_EXPLAIN_MS = 2600;
+  const REPLAY_FLIP_MS = 900;
+  const replay = {
+    active: false,
+    paused: false,
+    speed: 1,
+    skip: false,
+    advance: false,
+    startedAt: 0,
+    subtitles: [],
+    levelId: null,
+  };
+  let reasonTarget = null;
+  let reasonOwners = new Set();
+  let reasonClueIds = new Set();
+
   // ------------------------------------------------------------------
   // Small helpers
   // ------------------------------------------------------------------
@@ -93,6 +110,16 @@
       "toast",
       "toast-text",
       "help-modal",
+      "replay-bar",
+      "replay-stamp",
+      "replay-toggle",
+      "replay-next",
+      "replay-skip",
+      "replay-srt",
+      "replay-close",
+      "replay-title",
+      "replay-kicker",
+      "replay-reasons",
     ];
 
     ids.forEach((id) => {
@@ -124,6 +151,19 @@
     el.helpBtn.addEventListener("click", openHelp);
     el.hintBtn.addEventListener("click", requestHint);
     el.autoBtn.addEventListener("click", runAutoSolve);
+
+    el.replayToggle.addEventListener("click", toggleReplayPause);
+    el.replayNext.addEventListener("click", advanceReplay);
+    el.replaySkip.addEventListener("click", () => {
+      replay.skip = true;
+    });
+    el.replaySrt.addEventListener("click", downloadSubtitles);
+    el.replayClose.addEventListener("click", closeReplayBar);
+    el.replayBar.querySelectorAll("[data-speed]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setReplaySpeed(Number(button.getAttribute("data-speed")));
+      });
+    });
 
     el.board.addEventListener("click", (event) => {
       const verdictButton = event.target.closest("[data-verdict]");
@@ -178,6 +218,19 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (replay.active && !event.target.closest("input, select, textarea")) {
+        if (event.key === " ") {
+          event.preventDefault();
+          toggleReplayPause();
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          advanceReplay();
+          return;
+        }
+      }
+
       if (event.key !== "Escape") {
         return;
       }
@@ -285,6 +338,12 @@
     }
     if (recentFlips.has(person.index)) {
       classes.push("just-flipped");
+    }
+    if (reasonTarget === person.index) {
+      classes.push("reason-target");
+    }
+    if (reasonOwners.has(person.index)) {
+      classes.push("reason-owner");
     }
 
     const coord = escapeHtml(person.coord);
@@ -403,8 +462,9 @@
     el.clueList.innerHTML = data.revealed_clues
       .map((clue) => {
         const active = clue.id === activeClueId;
+        const reason = reasonClueIds.has(clue.id);
         return `
-          <button class="clue-item${active ? " is-active" : ""}"
+          <button class="clue-item${active ? " is-active" : ""}${reason ? " is-reason" : ""}"
                   type="button" data-clue-id="${escapeHtml(clue.id)}" aria-pressed="${active}">
             <span class="clue-text">${escapeHtml(clue.text)}</span>
           </button>
@@ -723,59 +783,122 @@
     highlightOwner = null;
     setBusy("auto");
 
+    let data;
     try {
-      const data = await api("/api/auto-solve", {});
-      let display = state;
-      const totalWaves = data.steps.length;
-
-      for (const step of data.steps) {
-        display = mergeWave(display, step);
-        flashCells(step.new_people.map((person) => person.index));
-        render(display);
-        showBoardStatus(
-          `Đợt ${step.wave}/${totalWaves} · ${step.new_people.length} lá bài vừa lật`,
-          true
-        );
-        await sleep(680);
-      }
-
-      state = data.state;
-      render();
-      showToast(
-        data.summary.status === "SUCCESS" ? "success" : "info",
-        data.message
-      );
-
-      if (state.solved) {
-        scheduleWin();
-      }
+      data = await api("/api/auto-solve", {});
     } catch (error) {
+      setBusy(null);
       render();
       showToast("error", error.message);
-    } finally {
-      setBusy(null);
-      hideBoardStatus(700);
+      return;
+    }
+
+    const moves = [];
+    data.steps.forEach((step) => {
+      step.verdicts.forEach((verdict, position) => {
+        moves.push({
+          wave: step.wave,
+          verdict,
+          person: step.new_people[position],
+          kbAfter:
+            position === step.verdicts.length - 1 ? step.kb_clauses_after : null,
+        });
+      });
+    });
+    const totalWaves = data.steps.length;
+
+    startReplay();
+    let display = state;
+    switchTab("clues");
+
+    for (let i = 0; i < moves.length && !replay.skip; i += 1) {
+      const move = moves[i];
+      const { verdict } = move;
+      const criminal = verdict.status === "CRIMINAL";
+      // Open clues whose region mentions this person (same rule as the
+      // hint button). They are related clues, not a minimal proof.
+      const reasons = display.revealed_clues.filter((clue) =>
+        clue.region.includes(verdict.index)
+      );
+
+      // Phase 1: point at the card and the clues that force its status.
+      reasonTarget = verdict.index;
+      reasonOwners = new Set(reasons.map((clue) => clue.owner));
+      reasonClueIds = new Set(reasons.map((clue) => clue.id));
+      render(display);
+      scrollCellIntoView(verdict.index);
+      showReplayStep({
+        stamp: `AGENT · BƯỚC ${i + 1}/${moves.length} · ĐỢT ${move.wave}/${totalWaves}`,
+        verdict,
+        criminal,
+        reasons,
+      });
+      await replayWait(REPLAY_EXPLAIN_MS, true);
+      if (replay.skip) {
+        break;
+      }
+
+      // Phase 2: flip the card; its clue joins the knowledge base.
+      display = mergePerson(display, move.person, move.kbAfter, verdict);
+      reasonOwners = new Set();
+      reasonClueIds = new Set();
+      flashCells([verdict.index]);
+      render(display);
+      await replayWait(REPLAY_FLIP_MS, false);
+      reasonTarget = null;
+    }
+
+    reasonTarget = null;
+    reasonOwners = new Set();
+    reasonClueIds = new Set();
+    state = data.state;
+    busy = false;
+    finishReplay(data);
+    render();
+    showToast(
+      data.summary.status === "SUCCESS" ? "success" : "info",
+      data.message
+    );
+
+    if (state.solved) {
+      scheduleWin();
     }
   }
 
-  function mergeWave(current, step) {
-    const newByIndex = new Map(
-      step.new_people.map((person) => [person.index, person])
-    );
-    const people = current.people.map(
-      (person) => newByIndex.get(person.index) || person
+  function scrollCellIntoView(index) {
+    const cell = el.board.querySelector(`.cell[data-index="${index}"]`);
+    if (cell) {
+      cell.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }
+
+  function mergePerson(current, person, kbAfter, verdict) {
+    const lastStep = current.trace.length
+      ? current.trace[current.trace.length - 1].step
+      : 0;
+    const trace = [
+      ...current.trace,
+      {
+        step: lastStep + 1,
+        kind: "auto",
+        verdict: verdict.status,
+        index: verdict.index,
+        coord: verdict.coord,
+        name: verdict.name,
+      },
+    ];
+    const people = current.people.map((item) =>
+      item.index === person.index ? person : item
     );
     const clues = [...current.revealed_clues];
-    step.new_people.forEach((person) => {
-      if (person.clue) {
-        clues.push(person.clue);
-      }
-    });
-    clues.sort((left, right) => left.owner - right.owner);
-
-    const flipped = Array.from(
-      new Set([...current.flipped, ...step.new_people.map((person) => person.index)])
-    ).sort((left, right) => left - right);
+    if (person.clue) {
+      clues.push(person.clue);
+      clues.sort((left, right) => left.owner - right.owner);
+    }
+    const flipped = Array.from(new Set([...current.flipped, person.index])).sort(
+      (left, right) => left - right
+    );
+    const kb = kbAfter ?? current.kb_clauses;
 
     return {
       ...current,
@@ -783,10 +906,190 @@
       flipped,
       remaining: current.map_size - flipped.length,
       solved: flipped.length === current.map_size,
-      kb_clauses: step.kb_clauses_after,
+      kb_clauses: kb,
       revealed_clues: clues,
-      stats: { ...current.stats, kb_clauses: step.kb_clauses_after },
+      trace,
+      stats: { ...current.stats, kb_clauses: kb },
     };
+  }
+
+  // ------------------------------------------------------------------
+  // Replay controls and subtitles
+  // ------------------------------------------------------------------
+
+  function startReplay() {
+    replay.active = true;
+    replay.paused = false;
+    replay.skip = false;
+    replay.advance = false;
+    replay.startedAt = performance.now();
+    replay.subtitles = [];
+    replay.levelId = state.level.id;
+
+    el.replayBar.hidden = false;
+    el.replayBar.classList.remove("is-done");
+    el.replayToggle.hidden = false;
+    el.replayNext.hidden = false;
+    el.replaySkip.hidden = false;
+    el.replaySrt.hidden = true;
+    el.replayClose.hidden = true;
+    updateReplayToggle();
+  }
+
+  function finishReplay(data) {
+    replay.active = false;
+    replay.paused = false;
+    closeSubtitle();
+
+    const summary = data.summary;
+    el.replayBar.classList.add("is-done");
+    el.replayStamp.textContent =
+      summary.status === "SUCCESS" ? "AGENT · HOÀN TẤT" : `AGENT · ${summary.status}`;
+    el.replayTitle.textContent = data.message;
+    el.replayKicker.hidden = true;
+    el.replayReasons.innerHTML = "";
+    el.replayToggle.hidden = true;
+    el.replayNext.hidden = true;
+    el.replaySkip.hidden = true;
+    el.replaySrt.hidden = replay.subtitles.length === 0;
+    el.replayClose.hidden = false;
+  }
+
+  function closeReplayBar() {
+    if (replay.active) {
+      return;
+    }
+    el.replayBar.hidden = true;
+  }
+
+  function showReplayStep({ stamp, verdict, criminal, reasons }) {
+    const label = criminal ? "TỘI PHẠM" : "VÔ TỘI";
+
+    el.replayStamp.textContent = stamp;
+    el.replayTitle.innerHTML = `
+      ${escapeHtml(verdict.coord)} · ${escapeHtml(verdict.name)} là
+      <span class="replay-verdict replay-verdict--${criminal ? "criminal" : "innocent"}">${label}</span>
+    `;
+    el.replayKicker.hidden = reasons.length === 0;
+    el.replayKicker.textContent = `Các manh mối đang mở có nhắc tới ${verdict.name}:`;
+    el.replayReasons.innerHTML = reasons
+      .map(
+        (clue) => `
+          <li>
+            <span class="replay-reason-owner">${escapeHtml(clue.owner_coord)} · ${escapeHtml(clue.owner_name)}</span>
+            <span class="replay-reason-text">${escapeHtml(clue.text)}</span>
+          </li>
+        `
+      )
+      .join("");
+
+    const owners = reasons.map((clue) => `${clue.owner_name} (${clue.owner_coord})`);
+    pushSubtitle([
+      `${verdict.name} (${verdict.coord}) là ${label}`,
+      owners.length ? `Manh mối liên quan: ${owners.join(", ")}` : "",
+    ]);
+  }
+
+  function pushSubtitle(lines) {
+    closeSubtitle();
+    replay.subtitles.push({
+      start: performance.now() - replay.startedAt,
+      end: null,
+      lines: lines.filter(Boolean),
+    });
+  }
+
+  function closeSubtitle() {
+    const last = replay.subtitles[replay.subtitles.length - 1];
+    if (last && last.end === null) {
+      last.end = performance.now() - replay.startedAt;
+    }
+  }
+
+  function srtTime(ms) {
+    const total = Math.max(0, Math.round(ms));
+    const pad = (value, size = 2) => String(value).padStart(size, "0");
+    const hours = Math.floor(total / 3600000);
+    const minutes = Math.floor((total % 3600000) / 60000);
+    const seconds = Math.floor((total % 60000) / 1000);
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)},${pad(total % 1000, 3)}`;
+  }
+
+  function downloadSubtitles() {
+    const body = replay.subtitles
+      .map(
+        (cue, i) =>
+          `${i + 1}\n${srtTime(cue.start)} --> ${srtTime(cue.end ?? cue.start + 2000)}\n${cue.lines.join("\n")}\n`
+      )
+      .join("\n");
+    const blob = new Blob(["﻿" + body], { type: "application/x-subrip;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `griductive-${(replay.levelId || "level").replace(/\.json$/, "")}.srt`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function toggleReplayPause() {
+    if (!replay.active) {
+      return;
+    }
+    replay.paused = !replay.paused;
+    updateReplayToggle();
+  }
+
+  function advanceReplay() {
+    if (!replay.active) {
+      return;
+    }
+    replay.advance = true;
+  }
+
+  function setReplaySpeed(speed) {
+    replay.speed = speed;
+    el.replayBar.querySelectorAll("[data-speed]").forEach((button) => {
+      button.classList.toggle(
+        "is-active",
+        Number(button.getAttribute("data-speed")) === speed
+      );
+    });
+  }
+
+  function updateReplayToggle() {
+    el.replayToggle.textContent = replay.paused ? "Tiếp tục" : "Tạm dừng";
+    el.replayBar.classList.toggle("is-paused", replay.paused);
+  }
+
+  // Waits `ms` of replay time. Speed changes apply mid-wait. A pausable wait
+  // freezes while paused; "Bước tiếp" ends the current pausable wait at once.
+  function replayWait(ms, pausable) {
+    replay.advance = false;
+    return new Promise((resolve) => {
+      let remaining = ms;
+      let last = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        const elapsed = now - last;
+        last = now;
+
+        if (replay.skip || (pausable && replay.advance)) {
+          replay.advance = false;
+          resolve();
+          return;
+        }
+        if (!(pausable && replay.paused)) {
+          remaining -= elapsed * replay.speed;
+        }
+        if (remaining <= 0) {
+          resolve();
+          return;
+        }
+        setTimeout(tick, 16);
+      };
+      setTimeout(tick, 16);
+    });
   }
 
   function adoptState(next) {
@@ -800,6 +1103,7 @@
     highlightOwner = null;
     recentFlips = new Set();
     flashToken += 1;
+    el.replayBar.hidden = true;
     el.levelSelect.value = state.level.id;
     render();
   }
