@@ -1,0 +1,352 @@
+{
+  "size": 5,
+  "initially_revealed": [
+    23
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          3,
+          5,
+          13,
+          20,
+          21,
+          25
+        ],
+        "k": 6
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          15,
+          23
+        ]
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          1
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          25
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          2,
+          24
+        ]
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          6,
+          10,
+          14,
+          17
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": false,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          17
+        ],
+        "other_region": [
+          10
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": false,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          2,
+          6,
+          13,
+          23
+        ],
+        "is_odd": false
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          4
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Judy",
+      "occupation": "Mason",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          7,
+          10,
+          23
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Karl",
+      "occupation": "Nurse",
+      "is_criminal": false,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          11,
+          21
+        ],
+        "is_odd": true
+      }
+    },
+    {
+      "name": "Leon",
+      "occupation": "Painter",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          7,
+          20
+        ]
+      }
+    },
+    {
+      "name": "Mia",
+      "occupation": "Pilot",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          6,
+          18
+        ]
+      }
+    },
+    {
+      "name": "Nina",
+      "occupation": "Plumber",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          8,
+          10,
+          13,
+          14
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Oscar",
+      "occupation": "Sailor",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          12
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Peggy",
+      "occupation": "Singer",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          3,
+          16
+        ]
+      }
+    },
+    {
+      "name": "Quinn",
+      "occupation": "Tailor",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          17,
+          18
+        ]
+      }
+    },
+    {
+      "name": "Rita",
+      "occupation": "Teacher",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          7,
+          13
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Sam",
+      "occupation": "Artist",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          16,
+          20
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Tina",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          20
+        ],
+        "is_criminal": true,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            19
+          ],
+          "is_criminal": true
+        }
+      }
+    },
+    {
+      "name": "Ursula",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          2
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Victor",
+      "occupation": "Chef",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          9,
+          14
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Wendy",
+      "occupation": "Clerk",
+      "is_criminal": false,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          10
+        ],
+        "other_region": [
+          23
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Xena",
+      "occupation": "Cook",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          8,
+          22
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Yara",
+      "occupation": "Doctor",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          2,
+          4,
+          11
+        ],
+        "k": 1
+      }
+    }
+  ],
+  "generation": {
+    "rank": 23,
+    "size": 5,
+    "tier_rank": 3,
+    "profile_rank": 3,
+    "difficulty": "Khó",
+    "seed": 20261126
+  }
+}

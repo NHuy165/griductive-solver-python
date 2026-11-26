@@ -1,0 +1,225 @@
+{
+  "size": 4,
+  "initially_revealed": [
+    13
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          8
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          2,
+          11
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          1,
+          10,
+          11,
+          14
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          2
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          16
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": true,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          1,
+          10,
+          13
+        ],
+        "is_odd": false
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          1,
+          2,
+          7,
+          11
+        ],
+        "k": 3
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          11
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Judy",
+      "occupation": "Mason",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          1,
+          7,
+          9,
+          10
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Karl",
+      "occupation": "Nurse",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          6,
+          8
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Leon",
+      "occupation": "Painter",
+      "is_criminal": false,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          15
+        ],
+        "other_region": [
+          1
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Mia",
+      "occupation": "Pilot",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          1,
+          13
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Nina",
+      "occupation": "Plumber",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          12
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Oscar",
+      "occupation": "Sailor",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          5,
+          13
+        ]
+      }
+    },
+    {
+      "name": "Peggy",
+      "occupation": "Singer",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          3,
+          7
+        ]
+      }
+    }
+  ],
+  "generation": {
+    "rank": 12,
+    "size": 4,
+    "tier_rank": 2,
+    "profile_rank": 2,
+    "difficulty": "Trung bình",
+    "seed": 20261126
+  }
+}

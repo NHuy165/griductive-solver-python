@@ -1,0 +1,135 @@
+{
+  "size": 3,
+  "initially_revealed": [
+    6
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          1,
+          2,
+          6,
+          9
+        ],
+        "is_odd": true
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          9
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          4
+        ],
+        "is_criminal": true,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            7
+          ],
+          "is_criminal": false
+        }
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          3
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": false,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          1,
+          8
+        ]
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": false,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          2,
+          6
+        ],
+        "k": 1
+      }
+    }
+  ],
+  "generation": {
+    "rank": 8,
+    "size": 3,
+    "tier_rank": 8,
+    "profile_rank": 8,
+    "difficulty": "Dễ",
+    "seed": 20261126
+  }
+}

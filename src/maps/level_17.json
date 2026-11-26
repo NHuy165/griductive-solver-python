@@ -1,0 +1,231 @@
+{
+  "size": 4,
+  "initially_revealed": [
+    8
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          6
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          1,
+          16
+        ]
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          5,
+          8
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          11,
+          14
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          9,
+          16
+        ]
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": true,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          2,
+          10,
+          12,
+          14
+        ],
+        "is_odd": true
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          1,
+          8,
+          11,
+          14
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": false,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          12
+        ],
+        "other_region": [
+          8
+        ],
+        "equals": false
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          14,
+          15
+        ]
+      }
+    },
+    {
+      "name": "Judy",
+      "occupation": "Mason",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          7,
+          12
+        ]
+      }
+    },
+    {
+      "name": "Karl",
+      "occupation": "Nurse",
+      "is_criminal": false,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "name": "Leon",
+      "occupation": "Painter",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          6,
+          8,
+          9,
+          12,
+          14
+        ],
+        "k": 4
+      }
+    },
+    {
+      "name": "Mia",
+      "occupation": "Pilot",
+      "is_criminal": true,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          11
+        ],
+        "is_criminal": false,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            10
+          ],
+          "is_criminal": false
+        }
+      }
+    },
+    {
+      "name": "Nina",
+      "occupation": "Plumber",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          10,
+          14
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Oscar",
+      "occupation": "Sailor",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          13
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Peggy",
+      "occupation": "Singer",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          4
+        ],
+        "is_criminal": true
+      }
+    }
+  ],
+  "generation": {
+    "rank": 17,
+    "size": 4,
+    "tier_rank": 7,
+    "profile_rank": 7,
+    "difficulty": "Trung bình",
+    "seed": 20261126
+  }
+}

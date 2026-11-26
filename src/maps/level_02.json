@@ -1,0 +1,132 @@
+{
+  "size": 3,
+  "initially_revealed": [
+    7
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          1,
+          2,
+          7,
+          8
+        ],
+        "k": 3
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          1
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          6
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          5
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          3,
+          5
+        ],
+        "k": 0
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          3,
+          6,
+          7,
+          9
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          3
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          4,
+          8
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          2
+        ],
+        "is_criminal": true
+      }
+    }
+  ],
+  "generation": {
+    "rank": 2,
+    "size": 3,
+    "tier_rank": 2,
+    "profile_rank": 2,
+    "difficulty": "Dễ",
+    "seed": 20261126
+  }
+}

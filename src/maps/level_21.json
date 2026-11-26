@@ -1,0 +1,345 @@
+{
+  "size": 5,
+  "initially_revealed": [
+    18
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          3,
+          17
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          20
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          5,
+          12,
+          15
+        ],
+        "k": 3
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          4,
+          8,
+          12,
+          18
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          16,
+          18
+        ]
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": true,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          23
+        ],
+        "other_region": [
+          14
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          9
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          3,
+          11
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Judy",
+      "occupation": "Mason",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          3,
+          10,
+          14,
+          19
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Karl",
+      "occupation": "Nurse",
+      "is_criminal": false,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          13,
+          20
+        ]
+      }
+    },
+    {
+      "name": "Leon",
+      "occupation": "Painter",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          14,
+          18
+        ]
+      }
+    },
+    {
+      "name": "Mia",
+      "occupation": "Pilot",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          10,
+          14
+        ]
+      }
+    },
+    {
+      "name": "Nina",
+      "occupation": "Plumber",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          1,
+          2,
+          3,
+          8,
+          12
+        ],
+        "k": 4
+      }
+    },
+    {
+      "name": "Oscar",
+      "occupation": "Sailor",
+      "is_criminal": true,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          2,
+          4,
+          18
+        ],
+        "is_odd": false
+      }
+    },
+    {
+      "name": "Peggy",
+      "occupation": "Singer",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          4
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Quinn",
+      "occupation": "Tailor",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          8,
+          21
+        ]
+      }
+    },
+    {
+      "name": "Rita",
+      "occupation": "Teacher",
+      "is_criminal": false,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          18
+        ],
+        "is_criminal": false,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            8
+          ],
+          "is_criminal": false
+        }
+      }
+    },
+    {
+      "name": "Sam",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          6,
+          12
+        ]
+      }
+    },
+    {
+      "name": "Tina",
+      "occupation": "Baker",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          15,
+          25
+        ]
+      }
+    },
+    {
+      "name": "Ursula",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          22,
+          25
+        ]
+      }
+    },
+    {
+      "name": "Victor",
+      "occupation": "Chef",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          24
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Wendy",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          1
+        ],
+        "is_criminal": true
+      }
+    },
+    {
+      "name": "Xena",
+      "occupation": "Cook",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          7,
+          17,
+          18
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Yara",
+      "occupation": "Doctor",
+      "is_criminal": false,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          10,
+          15
+        ],
+        "is_odd": true
+      }
+    }
+  ],
+  "generation": {
+    "rank": 21,
+    "size": 5,
+    "tier_rank": 1,
+    "profile_rank": 1,
+    "difficulty": "Khó",
+    "seed": 20261126
+  }
+}

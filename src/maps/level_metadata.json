@@ -1,0 +1,122 @@
+{
+  "level_01.json": {
+    "title": "Vườn chuối",
+    "subtitle": "Một buổi sáng yên bình trong vườn chuối — nhưng có người đang giấu điều gì đó."
+  },
+  "level_02.json": {
+    "title": "Đầm lầy",
+    "subtitle": "Sương mù che khuất những lá bài. Hãy lần theo từng manh mối đã được mở."
+  },
+  "level_03.json": {
+    "title": "Rừng mưa",
+    "subtitle": "Rừng mưa rậm rạp, nơi mọi manh mối đều đúng và không ai được phép đoán."
+  },
+  "level_04.json": {
+    "title": "Bãi biển",
+    "subtitle": "Nắng và gió biển. Chỉ những kết luận chắc chắn mới được chấp nhận."
+  },
+  "level_05.json": {
+    "title": "Hang đá",
+    "subtitle": "Những manh mối so sánh và chẵn lẻ bắt đầu xuất hiện. Hãy cẩn thận với từng bước suy luận."
+  },
+  "level_06.json": {
+    "title": "Đảo nhỏ",
+    "subtitle": "Hòn đảo nhỏ với những manh mối đan xen, dành cho người chơi đã quen luật."
+  },
+  "level_07.json": {
+    "title": "Thung lũng sương",
+    "subtitle": "Sương sớm che khuất các lá bài. Hãy tìm ra lời giải bằng những kết luận chắc chắn."
+  },
+  "level_08.json": {
+    "title": "Phố cổ",
+    "subtitle": "Những mái nhà san sát và các manh mối đếm ngày càng dày đặc."
+  },
+  "level_09.json": {
+    "title": "Mỏ đá",
+    "subtitle": "Ánh đèn mỏ soi từng kẽ đá. Mỗi kết luận đều phải được chứng minh."
+  },
+  "level_10.json": {
+    "title": "Đỉnh mây",
+    "subtitle": "Trên đỉnh mây, chỉ những suy luận vững chắc mới đứng vững."
+  },
+  "level_11.json": {
+    "title": "Khu chợ đêm",
+    "subtitle": "Đèn lồng và tiếng rao; manh mối hòa vào nhau giữa đám đông."
+  },
+  "level_12.json": {
+    "title": "Bến tàu",
+    "subtitle": "Tàu rời bến, để lại những lá bài chưa lật và nhiều khả năng."
+  },
+  "level_13.json": {
+    "title": "Nhà máy bỏ hoang",
+    "subtitle": "Những dây chuyền im lìm và các con số không chịu đứng yên."
+  },
+  "level_14.json": {
+    "title": "Thư viện cổ",
+    "subtitle": "Giữa những kệ sách, từng manh mối là một trang bị bỏ quên."
+  },
+  "level_15.json": {
+    "title": "Sa mạc đỏ",
+    "subtitle": "Nắng nóng và cát mịn; hãy lần theo dấu vết của sự thật."
+  },
+  "level_16.json": {
+    "title": "Rừng tre",
+    "subtitle": "Tre rì rào che khuất lối đi; đừng vội kết luận."
+  },
+  "level_17.json": {
+    "title": "Hồ băng",
+    "subtitle": "Mặt hồ phản chiếu những khả năng; chỉ một lời giải là thật."
+  },
+  "level_18.json": {
+    "title": "Thành phố ngầm",
+    "subtitle": "Hầm tối và những manh mối chồng chéo."
+  },
+  "level_19.json": {
+    "title": "Đồi thông",
+    "subtitle": "Gió thông reo trên những lá bài đã mở."
+  },
+  "level_20.json": {
+    "title": "Căn cứ trên núi",
+    "subtitle": "Một màn 4×4 nhiều tầng logic, dành cho người chơi kiên nhẫn."
+  },
+  "level_21.json": {
+    "title": "Biển sâu",
+    "subtitle": "Áp lực và bóng tối; mỗi bước suy luận đều phải chắc chắn."
+  },
+  "level_22.json": {
+    "title": "Thành phố tương lai",
+    "subtitle": "Những tòa tháp kính và các manh mối mở rộng."
+  },
+  "level_23.json": {
+    "title": "Mê cung đá",
+    "subtitle": "Ngõ cụt không dành cho người đoán mò."
+  },
+  "level_24.json": {
+    "title": "Đấu trường cổ",
+    "subtitle": "Tiếng vọng của những lá bài chưa lật."
+  },
+  "level_25.json": {
+    "title": "Trạm không gian",
+    "subtitle": "Ngoài khoảng không, chỉ logic mới đáng tin."
+  },
+  "level_26.json": {
+    "title": "Rừng nhiệt đới",
+    "subtitle": "Tầng tán rậm rạp với những manh mối đếm phức tạp."
+  },
+  "level_27.json": {
+    "title": "Hang băng",
+    "subtitle": "Lạnh giá và tĩnh lặng; hãy kiểm tra từng giả thiết."
+  },
+  "level_28.json": {
+    "title": "Tháp đồng hồ",
+    "subtitle": "Thời gian trôi, manh mối vẫn đúng."
+  },
+  "level_29.json": {
+    "title": "Đảo dung nham",
+    "subtitle": "Một màn 5×5 gay cấn với nhiều loại manh mối."
+  },
+  "level_30.json": {
+    "title": "Đỉnh núi cao nhất",
+    "subtitle": "Thử thách cuối cùng: 5×5, mọi bước đi đều phải được chứng minh."
+  }
+}
