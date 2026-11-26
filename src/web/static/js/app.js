@@ -103,7 +103,6 @@
       "clue-count",
       "clue-list",
       "stats-grid",
-      "auto-summary",
       "trace-count",
       "trace-list",
       "toast",
@@ -519,29 +518,6 @@
         `
       )
       .join("");
-
-    if (auto) {
-      el.autoSummary.hidden = false;
-      el.autoSummary.innerHTML = `
-        <b>Tự động giải</b>
-        ${auto.waves} đợt · ${auto.sat_calls} SAT · ${auto.decisions} quyết định ·
-        ${auto.backtracks} quay lui · ${Number(auto.time_ms).toFixed(2)} ms<br>
-        ${escapeHtml(autoMessage(auto))}
-      `;
-    } else {
-      el.autoSummary.hidden = true;
-      el.autoSummary.innerHTML = "";
-    }
-  }
-
-  function autoMessage(auto) {
-    if (auto.status === "SUCCESS") {
-      return "Agent đã kết luận được toàn bộ bàn chơi.";
-    }
-    if (auto.status === "STUCK") {
-      return "Agent dừng lại vì chưa đủ dữ kiện công khai.";
-    }
-    return "Cơ sở tri thức đã mâu thuẫn trong quá trình suy luận.";
   }
 
   function renderTrace(data) {

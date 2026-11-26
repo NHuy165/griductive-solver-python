@@ -1266,6 +1266,7 @@ h1, h2, h3, h4 {
   grid-template-columns: 1fr 1fr;
   background: var(--ink);
   gap: 1.5px;
+  border-bottom: var(--border-main);
 }
 
 .stat-row {
