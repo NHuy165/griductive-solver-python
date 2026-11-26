@@ -27,6 +27,7 @@
     paused: false,
     speed: 1,
     skip: false,
+    stop: false,
     advance: false,
     startedAt: 0,
     subtitles: [],
@@ -114,6 +115,7 @@
       "replay-toggle",
       "replay-next",
       "replay-skip",
+      "replay-stop",
       "replay-srt",
       "replay-close",
     ];
@@ -152,6 +154,9 @@
     el.replayNext.addEventListener("click", advanceReplay);
     el.replaySkip.addEventListener("click", () => {
       replay.skip = true;
+    });
+    el.replayStop.addEventListener("click", () => {
+      replay.stop = true;
     });
     el.replaySrt.addEventListener("click", downloadSubtitles);
     el.replayClose.addEventListener("click", closeReplayBar);
@@ -455,7 +460,14 @@
       return;
     }
 
-    el.clueList.innerHTML = data.revealed_clues
+    // Newest clue first. The server sorts clues by board position, which
+    // made a new clue land anywhere in the list; order by reveal instead.
+    const rank = revealRank(data);
+    el.clueList.innerHTML = [...data.revealed_clues]
+      .sort(
+        (left, right) =>
+          (rank.get(right.owner) ?? -1) - (rank.get(left.owner) ?? -1)
+      )
       .map((clue) => {
         const active = clue.id === activeClueId;
         return `
@@ -466,6 +478,20 @@
         `;
       })
       .join("");
+  }
+
+  // Order in which cards were revealed: the starting cards, then each step.
+  function revealRank(data) {
+    const rank = new Map();
+    (data.initial_flipped || []).forEach((index) => {
+      rank.set(index, rank.size);
+    });
+    data.trace.forEach((step) => {
+      if (!rank.has(step.index)) {
+        rank.set(step.index, rank.size);
+      }
+    });
+    return rank;
   }
 
   function renderStats(data) {
@@ -801,12 +827,18 @@
       });
     });
     const totalWaves = data.steps.length;
+    // Verdicts made before auto-solve, so "Tự chơi tiếp" can rebuild them.
+    const priorMoves = state.trace.map((step) => ({
+      index: step.index,
+      verdict: step.verdict,
+    }));
+    let revealed = 0;
 
     startReplay();
     let display = state;
     switchTab("clues");
 
-    for (let i = 0; i < moves.length && !replay.skip; i += 1) {
+    for (let i = 0; i < moves.length && !replay.skip && !replay.stop; i += 1) {
       const move = moves[i];
       const { verdict } = move;
       const criminal = verdict.status === "CRIMINAL";
@@ -828,12 +860,13 @@
         reasons,
       });
       await replayWait(REPLAY_EXPLAIN_MS, true);
-      if (replay.skip) {
+      if (replay.skip || replay.stop) {
         break;
       }
 
       // Phase 2: flip the card; its clue joins the knowledge base.
       display = mergePerson(display, move.person, move.kbAfter, verdict);
+      revealed += 1;
       reasonOwners = new Set();
       flashCells([verdict.index]);
       render(display);
@@ -843,6 +876,12 @@
 
     reasonTarget = null;
     reasonOwners = new Set();
+
+    if (replay.stop && !replay.skip) {
+      await handOverToPlayer(priorMoves, moves.slice(0, revealed));
+      return;
+    }
+
     state = data.state;
     busy = false;
     finishReplay(data);
@@ -855,6 +894,45 @@
     if (state.solved) {
       scheduleWin();
     }
+  }
+
+  // The server already applied the whole solution. To let the player take
+  // over mid-way, rebuild the session: restart, then replay the verdicts made
+  // before auto-solve plus the ones the replay has shown. Each one is
+  // provable at that point, because that is the order the agent found them.
+  async function handOverToPlayer(priorMoves, shownMoves) {
+    const verdicts = [
+      ...priorMoves,
+      ...shownMoves.map((move) => ({
+        index: move.verdict.index,
+        verdict: move.verdict.status,
+      })),
+    ];
+
+    try {
+      let result = await api("/api/restart");
+      for (const item of verdicts) {
+        result = await api("/api/verdict", item);
+        if (result.result !== "CORRECT") {
+          throw new Error(`Không dựng lại được bước của ${item.index}.`);
+        }
+      }
+      state = result.state;
+    } catch (error) {
+      busy = false;
+      finishReplay(null, 0);
+      render();
+      showToast("error", error.message);
+      return;
+    }
+
+    busy = false;
+    finishReplay(null, shownMoves.length);
+    render();
+    showToast(
+      "info",
+      `Agent dừng sau ${shownMoves.length} bước. Giờ tới lượt bạn chơi tiếp.`
+    );
   }
 
   function scrollCellIntoView(index) {
@@ -913,6 +991,7 @@
     replay.active = true;
     replay.paused = false;
     replay.skip = false;
+    replay.stop = false;
     replay.advance = false;
     replay.startedAt = performance.now();
     replay.subtitles = [];
@@ -922,24 +1001,33 @@
     el.replayBar.classList.remove("is-done");
     el.replayToggle.hidden = false;
     el.replayNext.hidden = false;
+    el.replayStop.hidden = false;
     el.replaySkip.hidden = false;
     el.replaySrt.hidden = true;
     el.replayClose.hidden = true;
     updateReplayToggle();
   }
 
-  function finishReplay(data) {
+  // `data` is the auto-solve response, or null when the player took over
+  // after `stoppedAt` steps.
+  function finishReplay(data, stoppedAt = 0) {
     replay.active = false;
     replay.paused = false;
     updateReplayToggle();
     closeSubtitle();
 
-    const summary = data.summary;
     el.replayBar.classList.add("is-done");
-    el.replayStamp.textContent =
-      summary.status === "SUCCESS" ? "AGENT · HOÀN TẤT" : `AGENT · ${summary.status}`;
+    if (data) {
+      el.replayStamp.textContent =
+        data.summary.status === "SUCCESS"
+          ? "AGENT · HOÀN TẤT"
+          : `AGENT · ${data.summary.status}`;
+    } else {
+      el.replayStamp.textContent = `AGENT · DỪNG SAU ${stoppedAt} BƯỚC`;
+    }
     el.replayToggle.hidden = true;
     el.replayNext.hidden = true;
+    el.replayStop.hidden = true;
     el.replaySkip.hidden = true;
     el.replaySrt.hidden = replay.subtitles.length === 0;
     el.replayClose.hidden = false;
@@ -1050,7 +1138,7 @@
         const elapsed = now - last;
         last = now;
 
-        if (replay.skip || (pausable && replay.advance)) {
+        if (replay.skip || replay.stop || (pausable && replay.advance)) {
           replay.advance = false;
           resolve();
           return;
