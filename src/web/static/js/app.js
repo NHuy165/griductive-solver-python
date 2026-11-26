@@ -19,6 +19,23 @@
   let winTimer = null;
   let flashToken = 0;
 
+  // Auto-solve replay: one card at a time, with the clues that force it.
+  const REPLAY_EXPLAIN_MS = 2600;
+  const REPLAY_FLIP_MS = 900;
+  const replay = {
+    active: false,
+    paused: false,
+    speed: 1,
+    skip: false,
+    stop: false,
+    advance: false,
+    startedAt: 0,
+    subtitles: [],
+    levelId: null,
+  };
+  let reasonTarget = null;
+  let reasonOwners = new Set();
+
   // ------------------------------------------------------------------
   // Small helpers
   // ------------------------------------------------------------------
@@ -74,7 +91,6 @@
   function cacheElements() {
     const ids = [
       "level-select",
-      "load-btn",
       "restart-btn",
       "help-btn",
       "stat-revealed",
@@ -87,12 +103,19 @@
       "clue-count",
       "clue-list",
       "stats-grid",
-      "auto-summary",
       "trace-count",
       "trace-list",
       "toast",
       "toast-text",
       "help-modal",
+      "replay-bar",
+      "replay-stamp",
+      "replay-toggle",
+      "replay-next",
+      "replay-skip",
+      "replay-stop",
+      "replay-srt",
+      "replay-close",
     ];
 
     ids.forEach((id) => {
@@ -119,11 +142,27 @@
       });
     });
 
-    el.loadBtn.addEventListener("click", loadLevel);
+    el.levelSelect.addEventListener("change", handleLevelChange);
     el.restartBtn.addEventListener("click", restartLevel);
     el.helpBtn.addEventListener("click", openHelp);
     el.hintBtn.addEventListener("click", requestHint);
     el.autoBtn.addEventListener("click", runAutoSolve);
+
+    el.replayToggle.addEventListener("click", toggleReplayPause);
+    el.replayNext.addEventListener("click", advanceReplay);
+    el.replaySkip.addEventListener("click", () => {
+      replay.skip = true;
+    });
+    el.replayStop.addEventListener("click", () => {
+      replay.stop = true;
+    });
+    el.replaySrt.addEventListener("click", downloadSubtitles);
+    el.replayClose.addEventListener("click", closeReplayBar);
+    el.replayBar.querySelectorAll("[data-speed]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setReplaySpeed(Number(button.getAttribute("data-speed")));
+      });
+    });
 
     el.board.addEventListener("click", (event) => {
       const verdictButton = event.target.closest("[data-verdict]");
@@ -178,7 +217,25 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (replay.active && !event.target.closest("input, select, textarea")) {
+        if (event.key === " ") {
+          event.preventDefault();
+          toggleReplayPause();
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          advanceReplay();
+          return;
+        }
+      }
+
       if (event.key !== "Escape") {
+        return;
+      }
+
+      if (document.querySelector(".confirm-overlay")) {
+        closeConfirm(false);
         return;
       }
 
@@ -285,6 +342,12 @@
     }
     if (recentFlips.has(person.index)) {
       classes.push("just-flipped");
+    }
+    if (reasonTarget === person.index) {
+      classes.push("reason-target");
+    }
+    if (reasonOwners.has(person.index)) {
+      classes.push("reason-owner");
     }
 
     const coord = escapeHtml(person.coord);
@@ -400,7 +463,14 @@
       return;
     }
 
-    el.clueList.innerHTML = data.revealed_clues
+    // Newest clue first. The server sorts clues by board position, which
+    // made a new clue land anywhere in the list; order by reveal instead.
+    const rank = revealRank(data);
+    el.clueList.innerHTML = [...data.revealed_clues]
+      .sort(
+        (left, right) =>
+          (rank.get(right.owner) ?? -1) - (rank.get(left.owner) ?? -1)
+      )
       .map((clue) => {
         const active = clue.id === activeClueId;
         return `
@@ -411,6 +481,20 @@
         `;
       })
       .join("");
+  }
+
+  // Order in which cards were revealed: the starting cards, then each step.
+  function revealRank(data) {
+    const rank = new Map();
+    (data.initial_flipped || []).forEach((index) => {
+      rank.set(index, rank.size);
+    });
+    data.trace.forEach((step) => {
+      if (!rank.has(step.index)) {
+        rank.set(step.index, rank.size);
+      }
+    });
+    return rank;
   }
 
   function renderStats(data) {
@@ -434,29 +518,6 @@
         `
       )
       .join("");
-
-    if (auto) {
-      el.autoSummary.hidden = false;
-      el.autoSummary.innerHTML = `
-        <b>Tự động giải</b>
-        ${auto.waves} đợt · ${auto.sat_calls} SAT · ${auto.decisions} quyết định ·
-        ${auto.backtracks} quay lui · ${Number(auto.time_ms).toFixed(2)} ms<br>
-        ${escapeHtml(autoMessage(auto))}
-      `;
-    } else {
-      el.autoSummary.hidden = true;
-      el.autoSummary.innerHTML = "";
-    }
-  }
-
-  function autoMessage(auto) {
-    if (auto.status === "SUCCESS") {
-      return "Agent đã kết luận được toàn bộ bàn chơi.";
-    }
-    if (auto.status === "STUCK") {
-      return "Agent dừng lại vì chưa đủ dữ kiện công khai.";
-    }
-    return "Cơ sở tri thức đã mâu thuẫn trong quá trình suy luận.";
   }
 
   function renderTrace(data) {
@@ -498,7 +559,6 @@
   function updateControls(data) {
     const locked = busy || data.solved;
 
-    el.loadBtn.disabled = busy;
     el.restartBtn.disabled = busy;
     el.levelSelect.disabled = busy;
     el.hintBtn.disabled = locked;
@@ -596,10 +656,83 @@
       adoptState(data.state);
       showToast("success", data.message);
     } catch (error) {
+      el.levelSelect.value = state.level.id;
       showToast("error", error.message);
     } finally {
       setBusy(null);
       hideBoardStatus(350);
+    }
+  }
+
+  // Picking a level opens it at once. Only a game in progress (some card
+  // flipped by the player or the agent, not yet solved) asks first.
+  async function handleLevelChange() {
+    if (!state || el.levelSelect.value === state.level.id) {
+      return;
+    }
+
+    const inProgress = state.trace.length > 0 && !state.solved;
+    if (inProgress) {
+      const target = LEVELS.find((level) => level.id === el.levelSelect.value);
+      const ok = await confirmDialog({
+        title: "Chuyển màn?",
+        message: `Bạn đang chơi dở màn ${state.level.number} · ${state.level.title}. Chuyển sang màn ${target ? `${target.number} · ${target.title}` : "mới"} sẽ mất tiến độ hiện tại.`,
+        confirmLabel: "Chuyển màn",
+        cancelLabel: "Ở lại",
+      });
+      if (!ok) {
+        el.levelSelect.value = state.level.id;
+        return;
+      }
+    }
+
+    loadLevel();
+  }
+
+  let confirmResolve = null;
+
+  function confirmDialog({ title, message, confirmLabel, cancelLabel }) {
+    closeConfirm(false);
+
+    const overlay = document.createElement("div");
+    overlay.className = "modal confirm-overlay";
+    overlay.innerHTML = `
+      <div class="modal-backdrop" data-confirm="no"></div>
+      <div class="modal-panel confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h2 class="confirm-title" id="confirm-title">${escapeHtml(title)}</h2>
+        <p class="confirm-text">${escapeHtml(message)}</p>
+        <div class="confirm-actions">
+          <button class="btn btn--quiet" type="button" data-confirm="no">${escapeHtml(cancelLabel)}</button>
+          <button class="btn btn--primary" type="button" data-confirm="yes">${escapeHtml(confirmLabel)}</button>
+        </div>
+      </div>
+    `;
+    document.body.append(overlay);
+    refreshModalLock();
+
+    overlay.addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-confirm]");
+      if (choice) {
+        closeConfirm(choice.getAttribute("data-confirm") === "yes");
+      }
+    });
+    overlay.querySelector('[data-confirm="no"].btn').focus();
+
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  function closeConfirm(answer) {
+    const overlay = document.querySelector(".confirm-overlay");
+    if (overlay) {
+      overlay.remove();
+      refreshModalLock();
+    }
+    if (confirmResolve) {
+      const resolve = confirmResolve;
+      confirmResolve = null;
+      resolve(answer);
     }
   }
 
@@ -723,59 +856,171 @@
     highlightOwner = null;
     setBusy("auto");
 
+    let data;
     try {
-      const data = await api("/api/auto-solve", {});
-      let display = state;
-      const totalWaves = data.steps.length;
-
-      for (const step of data.steps) {
-        display = mergeWave(display, step);
-        flashCells(step.new_people.map((person) => person.index));
-        render(display);
-        showBoardStatus(
-          `Đợt ${step.wave}/${totalWaves} · ${step.new_people.length} lá bài vừa lật`,
-          true
-        );
-        await sleep(680);
-      }
-
-      state = data.state;
-      render();
-      showToast(
-        data.summary.status === "SUCCESS" ? "success" : "info",
-        data.message
-      );
-
-      if (state.solved) {
-        scheduleWin();
-      }
+      data = await api("/api/auto-solve", {});
     } catch (error) {
+      setBusy(null);
       render();
       showToast("error", error.message);
-    } finally {
-      setBusy(null);
-      hideBoardStatus(700);
+      return;
+    }
+
+    const moves = [];
+    data.steps.forEach((step) => {
+      step.verdicts.forEach((verdict, position) => {
+        moves.push({
+          wave: step.wave,
+          verdict,
+          person: step.new_people[position],
+          kbAfter:
+            position === step.verdicts.length - 1 ? step.kb_clauses_after : null,
+        });
+      });
+    });
+    const totalWaves = data.steps.length;
+    // Verdicts made before auto-solve, so "Tự chơi tiếp" can rebuild them.
+    const priorMoves = state.trace.map((step) => ({
+      index: step.index,
+      verdict: step.verdict,
+    }));
+    let revealed = 0;
+
+    startReplay();
+    let display = state;
+    switchTab("clues");
+
+    for (let i = 0; i < moves.length && !replay.skip && !replay.stop; i += 1) {
+      const move = moves[i];
+      const { verdict } = move;
+      const criminal = verdict.status === "CRIMINAL";
+      // Open clues whose region mentions this person (same rule as the
+      // hint button). They are related clues, not a minimal proof.
+      const reasons = display.revealed_clues.filter((clue) =>
+        clue.region.includes(verdict.index)
+      );
+
+      // Phase 1: point at the card and the clues that force its status.
+      reasonTarget = verdict.index;
+      reasonOwners = new Set(reasons.map((clue) => clue.owner));
+      render(display);
+      scrollCellIntoView(verdict.index);
+      showReplayStep({
+        stamp: `AGENT · BƯỚC ${i + 1}/${moves.length} · ĐỢT ${move.wave}/${totalWaves}`,
+        verdict,
+        criminal,
+        reasons,
+      });
+      await replayWait(REPLAY_EXPLAIN_MS, true);
+      if (replay.skip || replay.stop) {
+        break;
+      }
+
+      // Phase 2: flip the card; its clue joins the knowledge base.
+      display = mergePerson(display, move.person, move.kbAfter, verdict);
+      revealed += 1;
+      reasonOwners = new Set();
+      flashCells([verdict.index]);
+      render(display);
+      await replayWait(REPLAY_FLIP_MS, false);
+      reasonTarget = null;
+    }
+
+    reasonTarget = null;
+    reasonOwners = new Set();
+
+    if (replay.stop && !replay.skip) {
+      await handOverToPlayer(priorMoves, moves.slice(0, revealed));
+      return;
+    }
+
+    state = data.state;
+    busy = false;
+    finishReplay(data);
+    render();
+    showToast(
+      data.summary.status === "SUCCESS" ? "success" : "info",
+      data.message
+    );
+
+    if (state.solved) {
+      scheduleWin();
     }
   }
 
-  function mergeWave(current, step) {
-    const newByIndex = new Map(
-      step.new_people.map((person) => [person.index, person])
+  // The server already applied the whole solution. To let the player take
+  // over mid-way, rebuild the session: restart, then replay the verdicts made
+  // before auto-solve plus the ones the replay has shown. Each one is
+  // provable at that point, because that is the order the agent found them.
+  async function handOverToPlayer(priorMoves, shownMoves) {
+    const verdicts = [
+      ...priorMoves,
+      ...shownMoves.map((move) => ({
+        index: move.verdict.index,
+        verdict: move.verdict.status,
+      })),
+    ];
+
+    try {
+      let result = await api("/api/restart");
+      for (const item of verdicts) {
+        result = await api("/api/verdict", item);
+        if (result.result !== "CORRECT") {
+          throw new Error(`Không dựng lại được bước của ${item.index}.`);
+        }
+      }
+      state = result.state;
+    } catch (error) {
+      busy = false;
+      finishReplay(null, 0);
+      render();
+      showToast("error", error.message);
+      return;
+    }
+
+    busy = false;
+    finishReplay(null, shownMoves.length);
+    render();
+    showToast(
+      "info",
+      `Agent dừng sau ${shownMoves.length} bước. Giờ tới lượt bạn chơi tiếp.`
     );
-    const people = current.people.map(
-      (person) => newByIndex.get(person.index) || person
+  }
+
+  function scrollCellIntoView(index) {
+    const cell = el.board.querySelector(`.cell[data-index="${index}"]`);
+    if (cell) {
+      cell.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }
+
+  function mergePerson(current, person, kbAfter, verdict) {
+    const lastStep = current.trace.length
+      ? current.trace[current.trace.length - 1].step
+      : 0;
+    const trace = [
+      ...current.trace,
+      {
+        step: lastStep + 1,
+        kind: "auto",
+        verdict: verdict.status,
+        index: verdict.index,
+        coord: verdict.coord,
+        name: verdict.name,
+      },
+    ];
+    const people = current.people.map((item) =>
+      item.index === person.index ? person : item
     );
     const clues = [...current.revealed_clues];
-    step.new_people.forEach((person) => {
-      if (person.clue) {
-        clues.push(person.clue);
-      }
-    });
-    clues.sort((left, right) => left.owner - right.owner);
-
-    const flipped = Array.from(
-      new Set([...current.flipped, ...step.new_people.map((person) => person.index)])
-    ).sort((left, right) => left - right);
+    if (person.clue) {
+      clues.push(person.clue);
+      clues.sort((left, right) => left.owner - right.owner);
+    }
+    const flipped = Array.from(new Set([...current.flipped, person.index])).sort(
+      (left, right) => left - right
+    );
+    const kb = kbAfter ?? current.kb_clauses;
 
     return {
       ...current,
@@ -783,10 +1028,184 @@
       flipped,
       remaining: current.map_size - flipped.length,
       solved: flipped.length === current.map_size,
-      kb_clauses: step.kb_clauses_after,
+      kb_clauses: kb,
       revealed_clues: clues,
-      stats: { ...current.stats, kb_clauses: step.kb_clauses_after },
+      trace,
+      stats: { ...current.stats, kb_clauses: kb },
     };
+  }
+
+  // ------------------------------------------------------------------
+  // Replay controls and subtitles
+  // ------------------------------------------------------------------
+
+  function startReplay() {
+    replay.active = true;
+    replay.paused = false;
+    replay.skip = false;
+    replay.stop = false;
+    replay.advance = false;
+    replay.startedAt = performance.now();
+    replay.subtitles = [];
+    replay.levelId = state.level.id;
+
+    el.replayBar.hidden = false;
+    el.replayBar.classList.remove("is-done");
+    el.replayToggle.hidden = false;
+    el.replayNext.hidden = false;
+    el.replayStop.hidden = false;
+    el.replaySkip.hidden = false;
+    el.replaySrt.hidden = true;
+    el.replayClose.hidden = true;
+    updateReplayToggle();
+  }
+
+  // `data` is the auto-solve response, or null when the player took over
+  // after `stoppedAt` steps.
+  function finishReplay(data, stoppedAt = 0) {
+    replay.active = false;
+    replay.paused = false;
+    updateReplayToggle();
+    closeSubtitle();
+
+    el.replayBar.classList.add("is-done");
+    if (data) {
+      el.replayStamp.textContent =
+        data.summary.status === "SUCCESS"
+          ? "AGENT · HOÀN TẤT"
+          : `AGENT · ${data.summary.status}`;
+    } else {
+      el.replayStamp.textContent = `AGENT · DỪNG SAU ${stoppedAt} BƯỚC`;
+    }
+    el.replayToggle.hidden = true;
+    el.replayNext.hidden = true;
+    el.replayStop.hidden = true;
+    el.replaySkip.hidden = true;
+    el.replaySrt.hidden = replay.subtitles.length === 0;
+    el.replayClose.hidden = false;
+  }
+
+  function closeReplayBar() {
+    if (replay.active) {
+      return;
+    }
+    el.replayBar.hidden = true;
+  }
+
+  function showReplayStep({ stamp, verdict, criminal, reasons }) {
+    const label = criminal ? "TỘI PHẠM" : "VÔ TỘI";
+
+    // On screen only the step counter changes: the board already shows the
+    // target card and its related clues. The wording goes to subtitles.
+    el.replayStamp.textContent = stamp;
+
+    const owners = reasons.map((clue) => `${clue.owner_name} (${clue.owner_coord})`);
+    pushSubtitle([
+      `${verdict.name} (${verdict.coord}) là ${label}`,
+      owners.length ? `Manh mối liên quan: ${owners.join(", ")}` : "",
+    ]);
+  }
+
+  function pushSubtitle(lines) {
+    closeSubtitle();
+    replay.subtitles.push({
+      start: performance.now() - replay.startedAt,
+      end: null,
+      lines: lines.filter(Boolean),
+    });
+  }
+
+  function closeSubtitle() {
+    const last = replay.subtitles[replay.subtitles.length - 1];
+    if (last && last.end === null) {
+      last.end = performance.now() - replay.startedAt;
+    }
+  }
+
+  function srtTime(ms) {
+    const total = Math.max(0, Math.round(ms));
+    const pad = (value, size = 2) => String(value).padStart(size, "0");
+    const hours = Math.floor(total / 3600000);
+    const minutes = Math.floor((total % 3600000) / 60000);
+    const seconds = Math.floor((total % 60000) / 1000);
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)},${pad(total % 1000, 3)}`;
+  }
+
+  function downloadSubtitles() {
+    const body = replay.subtitles
+      .map(
+        (cue, i) =>
+          `${i + 1}\n${srtTime(cue.start)} --> ${srtTime(cue.end ?? cue.start + 2000)}\n${cue.lines.join("\n")}\n`
+      )
+      .join("\n");
+    const blob = new Blob(["﻿" + body], { type: "application/x-subrip;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `griductive-${(replay.levelId || "level").replace(/\.json$/, "")}.srt`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function toggleReplayPause() {
+    if (!replay.active) {
+      return;
+    }
+    replay.paused = !replay.paused;
+    updateReplayToggle();
+  }
+
+  function advanceReplay() {
+    if (!replay.active) {
+      return;
+    }
+    replay.advance = true;
+  }
+
+  function setReplaySpeed(speed) {
+    replay.speed = speed;
+    el.replayBar.querySelectorAll("[data-speed]").forEach((button) => {
+      button.classList.toggle(
+        "is-active",
+        Number(button.getAttribute("data-speed")) === speed
+      );
+    });
+  }
+
+  function updateReplayToggle() {
+    el.replayToggle.textContent = replay.paused ? "Tiếp tục" : "Tạm dừng";
+    el.replayBar.classList.toggle("is-paused", replay.paused);
+  }
+
+  // Waits `ms` of replay time. Speed changes apply mid-wait. A pausable wait
+  // freezes while paused; "Bước tiếp" ends the current pausable wait at once.
+  function replayWait(ms, pausable) {
+    replay.advance = false;
+    return new Promise((resolve) => {
+      let remaining = ms;
+      let last = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        const elapsed = now - last;
+        last = now;
+
+        if (replay.skip || replay.stop || (pausable && replay.advance)) {
+          replay.advance = false;
+          resolve();
+          return;
+        }
+        if (!(pausable && replay.paused)) {
+          remaining -= elapsed * replay.speed;
+        }
+        if (remaining <= 0) {
+          resolve();
+          return;
+        }
+        setTimeout(tick, 16);
+      };
+      setTimeout(tick, 16);
+    });
   }
 
   function adoptState(next) {
@@ -800,6 +1219,7 @@
     highlightOwner = null;
     recentFlips = new Set();
     flashToken += 1;
+    el.replayBar.hidden = true;
     el.levelSelect.value = state.level.id;
     render();
   }
@@ -910,7 +1330,8 @@
   function refreshModalLock() {
     const helpOpen = !el.helpModal.hidden;
     const winOpen = Boolean(document.querySelector(".win-overlay"));
-    document.body.classList.toggle("modal-open", helpOpen || winOpen);
+    const confirmOpen = Boolean(document.querySelector(".confirm-overlay"));
+    document.body.classList.toggle("modal-open", helpOpen || winOpen || confirmOpen);
   }
 
   function showWin() {

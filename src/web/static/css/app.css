@@ -1266,6 +1266,7 @@ h1, h2, h3, h4 {
   grid-template-columns: 1fr 1fr;
   background: var(--ink);
   gap: 1.5px;
+  border-bottom: var(--border-main);
 }
 
 .stat-row {
@@ -2304,4 +2305,126 @@ h1, h2, h3, h4 {
     padding: 8px 5px;
     font-size: 0.9rem;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Auto-solve replay: compact controls in the sidebar, highlights on board
+   -------------------------------------------------------------------------- */
+
+.replay-bar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.replay-bar.is-paused {
+  background: var(--bauhaus-yellow-soft);
+}
+
+.replay-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.replay-bar.is-paused .replay-stamp::after {
+  content: " · TẠM DỪNG";
+  color: var(--bauhaus-orange);
+}
+
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.replay-btn,
+.replay-speed-btn {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: var(--surface);
+  color: var(--ink);
+  border: var(--border-thin);
+  cursor: pointer;
+}
+
+.replay-btn:hover,
+.replay-speed-btn:hover {
+  background: var(--surface-alt);
+}
+
+.replay-btn--primary {
+  background: var(--ocean-blue);
+  color: #FFFFFF;
+}
+
+.replay-btn--primary:hover {
+  background: var(--ocean-blue-dark);
+}
+
+.replay-speed {
+  display: inline-flex;
+  margin-left: auto;
+}
+
+.replay-speed-btn + .replay-speed-btn {
+  border-left: none;
+}
+
+.replay-speed-btn.is-active {
+  background: var(--bauhaus-yellow);
+}
+
+.replay-bar.is-done .replay-speed {
+  display: none;
+}
+
+/* The card being concluded, and the cards whose clue mentions it. */
+.cell.reason-target {
+  transform: translate(-3px, -3px);
+  box-shadow: 0 0 0 4px var(--bauhaus-yellow), var(--shadow-hard);
+}
+
+.cell.reason-owner .cell-clue {
+  background: var(--bauhaus-yellow-soft);
+  box-shadow: inset 4px 0 0 var(--bauhaus-yellow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.reason-target {
+    transform: none;
+  }
+}
+
+/* Confirm dialog (switching level while a game is in progress) */
+.confirm-panel {
+  max-width: 460px;
+  gap: 14px;
+  padding: 24px;
+}
+
+.confirm-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.confirm-text {
+  font-family: var(--font-editorial);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--ink-secondary);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
