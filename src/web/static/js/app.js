@@ -34,7 +34,6 @@
   };
   let reasonTarget = null;
   let reasonOwners = new Set();
-  let reasonClueIds = new Set();
 
   // ------------------------------------------------------------------
   // Small helpers
@@ -117,9 +116,6 @@
       "replay-skip",
       "replay-srt",
       "replay-close",
-      "replay-title",
-      "replay-kicker",
-      "replay-reasons",
     ];
 
     ids.forEach((id) => {
@@ -462,9 +458,8 @@
     el.clueList.innerHTML = data.revealed_clues
       .map((clue) => {
         const active = clue.id === activeClueId;
-        const reason = reasonClueIds.has(clue.id);
         return `
-          <button class="clue-item${active ? " is-active" : ""}${reason ? " is-reason" : ""}"
+          <button class="clue-item${active ? " is-active" : ""}"
                   type="button" data-clue-id="${escapeHtml(clue.id)}" aria-pressed="${active}">
             <span class="clue-text">${escapeHtml(clue.text)}</span>
           </button>
@@ -824,7 +819,6 @@
       // Phase 1: point at the card and the clues that force its status.
       reasonTarget = verdict.index;
       reasonOwners = new Set(reasons.map((clue) => clue.owner));
-      reasonClueIds = new Set(reasons.map((clue) => clue.id));
       render(display);
       scrollCellIntoView(verdict.index);
       showReplayStep({
@@ -841,7 +835,6 @@
       // Phase 2: flip the card; its clue joins the knowledge base.
       display = mergePerson(display, move.person, move.kbAfter, verdict);
       reasonOwners = new Set();
-      reasonClueIds = new Set();
       flashCells([verdict.index]);
       render(display);
       await replayWait(REPLAY_FLIP_MS, false);
@@ -850,7 +843,6 @@
 
     reasonTarget = null;
     reasonOwners = new Set();
-    reasonClueIds = new Set();
     state = data.state;
     busy = false;
     finishReplay(data);
@@ -939,15 +931,13 @@
   function finishReplay(data) {
     replay.active = false;
     replay.paused = false;
+    updateReplayToggle();
     closeSubtitle();
 
     const summary = data.summary;
     el.replayBar.classList.add("is-done");
     el.replayStamp.textContent =
       summary.status === "SUCCESS" ? "AGENT · HOÀN TẤT" : `AGENT · ${summary.status}`;
-    el.replayTitle.textContent = data.message;
-    el.replayKicker.hidden = true;
-    el.replayReasons.innerHTML = "";
     el.replayToggle.hidden = true;
     el.replayNext.hidden = true;
     el.replaySkip.hidden = true;
@@ -965,23 +955,9 @@
   function showReplayStep({ stamp, verdict, criminal, reasons }) {
     const label = criminal ? "TỘI PHẠM" : "VÔ TỘI";
 
+    // On screen only the step counter changes: the board already shows the
+    // target card and its related clues. The wording goes to subtitles.
     el.replayStamp.textContent = stamp;
-    el.replayTitle.innerHTML = `
-      ${escapeHtml(verdict.coord)} · ${escapeHtml(verdict.name)} là
-      <span class="replay-verdict replay-verdict--${criminal ? "criminal" : "innocent"}">${label}</span>
-    `;
-    el.replayKicker.hidden = reasons.length === 0;
-    el.replayKicker.textContent = `Các manh mối đang mở có nhắc tới ${verdict.name}:`;
-    el.replayReasons.innerHTML = reasons
-      .map(
-        (clue) => `
-          <li>
-            <span class="replay-reason-owner">${escapeHtml(clue.owner_coord)} · ${escapeHtml(clue.owner_name)}</span>
-            <span class="replay-reason-text">${escapeHtml(clue.text)}</span>
-          </li>
-        `
-      )
-      .join("");
 
     const owners = reasons.map((clue) => `${clue.owner_name} (${clue.owner_coord})`);
     pushSubtitle([
