@@ -2401,3 +2401,29 @@ h1, h2, h3, h4 {
     transform: none;
   }
 }
+
+/* Confirm dialog (switching level while a game is in progress) */
+.confirm-panel {
+  max-width: 460px;
+  gap: 14px;
+  padding: 24px;
+}
+
+.confirm-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.confirm-text {
+  font-family: var(--font-editorial);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--ink-secondary);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

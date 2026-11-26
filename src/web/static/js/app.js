@@ -91,7 +91,6 @@
   function cacheElements() {
     const ids = [
       "level-select",
-      "load-btn",
       "restart-btn",
       "help-btn",
       "stat-revealed",
@@ -144,7 +143,7 @@
       });
     });
 
-    el.loadBtn.addEventListener("click", loadLevel);
+    el.levelSelect.addEventListener("change", handleLevelChange);
     el.restartBtn.addEventListener("click", restartLevel);
     el.helpBtn.addEventListener("click", openHelp);
     el.hintBtn.addEventListener("click", requestHint);
@@ -233,6 +232,11 @@
       }
 
       if (event.key !== "Escape") {
+        return;
+      }
+
+      if (document.querySelector(".confirm-overlay")) {
+        closeConfirm(false);
         return;
       }
 
@@ -579,7 +583,6 @@
   function updateControls(data) {
     const locked = busy || data.solved;
 
-    el.loadBtn.disabled = busy;
     el.restartBtn.disabled = busy;
     el.levelSelect.disabled = busy;
     el.hintBtn.disabled = locked;
@@ -677,10 +680,83 @@
       adoptState(data.state);
       showToast("success", data.message);
     } catch (error) {
+      el.levelSelect.value = state.level.id;
       showToast("error", error.message);
     } finally {
       setBusy(null);
       hideBoardStatus(350);
+    }
+  }
+
+  // Picking a level opens it at once. Only a game in progress (some card
+  // flipped by the player or the agent, not yet solved) asks first.
+  async function handleLevelChange() {
+    if (!state || el.levelSelect.value === state.level.id) {
+      return;
+    }
+
+    const inProgress = state.trace.length > 0 && !state.solved;
+    if (inProgress) {
+      const target = LEVELS.find((level) => level.id === el.levelSelect.value);
+      const ok = await confirmDialog({
+        title: "Chuyển màn?",
+        message: `Bạn đang chơi dở màn ${state.level.number} · ${state.level.title}. Chuyển sang màn ${target ? `${target.number} · ${target.title}` : "mới"} sẽ mất tiến độ hiện tại.`,
+        confirmLabel: "Chuyển màn",
+        cancelLabel: "Ở lại",
+      });
+      if (!ok) {
+        el.levelSelect.value = state.level.id;
+        return;
+      }
+    }
+
+    loadLevel();
+  }
+
+  let confirmResolve = null;
+
+  function confirmDialog({ title, message, confirmLabel, cancelLabel }) {
+    closeConfirm(false);
+
+    const overlay = document.createElement("div");
+    overlay.className = "modal confirm-overlay";
+    overlay.innerHTML = `
+      <div class="modal-backdrop" data-confirm="no"></div>
+      <div class="modal-panel confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h2 class="confirm-title" id="confirm-title">${escapeHtml(title)}</h2>
+        <p class="confirm-text">${escapeHtml(message)}</p>
+        <div class="confirm-actions">
+          <button class="btn btn--quiet" type="button" data-confirm="no">${escapeHtml(cancelLabel)}</button>
+          <button class="btn btn--primary" type="button" data-confirm="yes">${escapeHtml(confirmLabel)}</button>
+        </div>
+      </div>
+    `;
+    document.body.append(overlay);
+    refreshModalLock();
+
+    overlay.addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-confirm]");
+      if (choice) {
+        closeConfirm(choice.getAttribute("data-confirm") === "yes");
+      }
+    });
+    overlay.querySelector('[data-confirm="no"].btn').focus();
+
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  function closeConfirm(answer) {
+    const overlay = document.querySelector(".confirm-overlay");
+    if (overlay) {
+      overlay.remove();
+      refreshModalLock();
+    }
+    if (confirmResolve) {
+      const resolve = confirmResolve;
+      confirmResolve = null;
+      resolve(answer);
     }
   }
 
@@ -1278,7 +1354,8 @@
   function refreshModalLock() {
     const helpOpen = !el.helpModal.hidden;
     const winOpen = Boolean(document.querySelector(".win-overlay"));
-    document.body.classList.toggle("modal-open", helpOpen || winOpen);
+    const confirmOpen = Boolean(document.querySelector(".confirm-overlay"));
+    document.body.classList.toggle("modal-open", helpOpen || winOpen || confirmOpen);
   }
 
   function showWin() {
