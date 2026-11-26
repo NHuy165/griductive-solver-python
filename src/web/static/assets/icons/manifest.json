@@ -1,0 +1,404 @@
+[
+  {
+    "key": "mdi--handcuffs",
+    "prefix": "mdi",
+    "name": "handcuffs",
+    "source": "https://api.iconify.design/mdi/handcuffs.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--shield-check",
+    "prefix": "mdi",
+    "name": "shield-check",
+    "source": "https://api.iconify.design/mdi/shield-check.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--lightbulb-on",
+    "prefix": "mdi",
+    "name": "lightbulb-on",
+    "source": "https://api.iconify.design/mdi/lightbulb-on.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--robot",
+    "prefix": "mdi",
+    "name": "robot",
+    "source": "https://api.iconify.design/mdi/robot.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--restart",
+    "prefix": "mdi",
+    "name": "restart",
+    "source": "https://api.iconify.design/mdi/restart.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--folder-open",
+    "prefix": "mdi",
+    "name": "folder-open",
+    "source": "https://api.iconify.design/mdi/folder-open.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--eye",
+    "prefix": "mdi",
+    "name": "eye",
+    "source": "https://api.iconify.design/mdi/eye.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--close",
+    "prefix": "mdi",
+    "name": "close",
+    "source": "https://api.iconify.design/mdi/close.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--check-bold",
+    "prefix": "mdi",
+    "name": "check-bold",
+    "source": "https://api.iconify.design/mdi/check-bold.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--alert-circle",
+    "prefix": "mdi",
+    "name": "alert-circle",
+    "source": "https://api.iconify.design/mdi/alert-circle.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--information",
+    "prefix": "mdi",
+    "name": "information",
+    "source": "https://api.iconify.design/mdi/information.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--chart-box",
+    "prefix": "mdi",
+    "name": "chart-box",
+    "source": "https://api.iconify.design/mdi/chart-box.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--format-list-bulleted",
+    "prefix": "mdi",
+    "name": "format-list-bulleted",
+    "source": "https://api.iconify.design/mdi/format-list-bulleted.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--help-circle",
+    "prefix": "mdi",
+    "name": "help-circle",
+    "source": "https://api.iconify.design/mdi/help-circle.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--arrow-right",
+    "prefix": "mdi",
+    "name": "arrow-right",
+    "source": "https://api.iconify.design/mdi/arrow-right.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--lock",
+    "prefix": "mdi",
+    "name": "lock",
+    "source": "https://api.iconify.design/mdi/lock.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--lock-open",
+    "prefix": "mdi",
+    "name": "lock-open",
+    "source": "https://api.iconify.design/mdi/lock-open.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--map-marker",
+    "prefix": "mdi",
+    "name": "map-marker",
+    "source": "https://api.iconify.design/mdi/map-marker.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--target",
+    "prefix": "mdi",
+    "name": "target",
+    "source": "https://api.iconify.design/mdi/target.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--play",
+    "prefix": "mdi",
+    "name": "play",
+    "source": "https://api.iconify.design/mdi/play.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--brain",
+    "prefix": "mdi",
+    "name": "brain",
+    "source": "https://api.iconify.design/mdi/brain.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--database",
+    "prefix": "mdi",
+    "name": "database",
+    "source": "https://api.iconify.design/mdi/database.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--layers",
+    "prefix": "mdi",
+    "name": "layers",
+    "source": "https://api.iconify.design/mdi/layers.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--clock-outline",
+    "prefix": "mdi",
+    "name": "clock-outline",
+    "source": "https://api.iconify.design/mdi/clock-outline.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--counter",
+    "prefix": "mdi",
+    "name": "counter",
+    "source": "https://api.iconify.design/mdi/counter.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--chart-timeline-variant",
+    "prefix": "mdi",
+    "name": "chart-timeline-variant",
+    "source": "https://api.iconify.design/mdi/chart-timeline-variant.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--lightning-bolt",
+    "prefix": "mdi",
+    "name": "lightning-bolt",
+    "source": "https://api.iconify.design/mdi/lightning-bolt.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--trophy",
+    "prefix": "mdi",
+    "name": "trophy",
+    "source": "https://api.iconify.design/mdi/trophy.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--account",
+    "prefix": "mdi",
+    "name": "account",
+    "source": "https://api.iconify.design/mdi/account.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--account-check",
+    "prefix": "mdi",
+    "name": "account-check",
+    "source": "https://api.iconify.design/mdi/account-check.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--equal",
+    "prefix": "mdi",
+    "name": "equal",
+    "source": "https://api.iconify.design/mdi/equal.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--not-equal-variant",
+    "prefix": "mdi",
+    "name": "not-equal-variant",
+    "source": "https://api.iconify.design/mdi/not-equal-variant.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--chevron-double-up",
+    "prefix": "mdi",
+    "name": "chevron-double-up",
+    "source": "https://api.iconify.design/mdi/chevron-double-up.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--chevron-double-down",
+    "prefix": "mdi",
+    "name": "chevron-double-down",
+    "source": "https://api.iconify.design/mdi/chevron-double-down.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--arrow-right-bold",
+    "prefix": "mdi",
+    "name": "arrow-right-bold",
+    "source": "https://api.iconify.design/mdi/arrow-right-bold.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--scale-balance",
+    "prefix": "mdi",
+    "name": "scale-balance",
+    "source": "https://api.iconify.design/mdi/scale-balance.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--swap-horizontal",
+    "prefix": "mdi",
+    "name": "swap-horizontal",
+    "source": "https://api.iconify.design/mdi/swap-horizontal.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--palette",
+    "prefix": "mdi",
+    "name": "palette",
+    "source": "https://api.iconify.design/mdi/palette.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--bread-slice",
+    "prefix": "mdi",
+    "name": "bread-slice",
+    "source": "https://api.iconify.design/mdi/bread-slice.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--bank",
+    "prefix": "mdi",
+    "name": "bank",
+    "source": "https://api.iconify.design/mdi/bank.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--chef-hat",
+    "prefix": "mdi",
+    "name": "chef-hat",
+    "source": "https://api.iconify.design/mdi/chef-hat.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--briefcase",
+    "prefix": "mdi",
+    "name": "briefcase",
+    "source": "https://api.iconify.design/mdi/briefcase.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--pot-steam",
+    "prefix": "mdi",
+    "name": "pot-steam",
+    "source": "https://api.iconify.design/mdi/pot-steam.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--stethoscope",
+    "prefix": "mdi",
+    "name": "stethoscope",
+    "source": "https://api.iconify.design/mdi/stethoscope.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--sprout",
+    "prefix": "mdi",
+    "name": "sprout",
+    "source": "https://api.iconify.design/mdi/sprout.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--gavel",
+    "prefix": "mdi",
+    "name": "gavel",
+    "source": "https://api.iconify.design/mdi/gavel.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--hammer",
+    "prefix": "mdi",
+    "name": "hammer",
+    "source": "https://api.iconify.design/mdi/hammer.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--medical-bag",
+    "prefix": "mdi",
+    "name": "medical-bag",
+    "source": "https://api.iconify.design/mdi/medical-bag.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--brush",
+    "prefix": "mdi",
+    "name": "brush",
+    "source": "https://api.iconify.design/mdi/brush.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--airplane",
+    "prefix": "mdi",
+    "name": "airplane",
+    "source": "https://api.iconify.design/mdi/airplane.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--pipe-wrench",
+    "prefix": "mdi",
+    "name": "pipe-wrench",
+    "source": "https://api.iconify.design/mdi/pipe-wrench.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--sail-boat",
+    "prefix": "mdi",
+    "name": "sail-boat",
+    "source": "https://api.iconify.design/mdi/sail-boat.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--microphone",
+    "prefix": "mdi",
+    "name": "microphone",
+    "source": "https://api.iconify.design/mdi/microphone.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--tape-measure",
+    "prefix": "mdi",
+    "name": "tape-measure",
+    "source": "https://api.iconify.design/mdi/tape-measure.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--school",
+    "prefix": "mdi",
+    "name": "school",
+    "source": "https://api.iconify.design/mdi/school.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--flower",
+    "prefix": "mdi",
+    "name": "flower",
+    "source": "https://api.iconify.design/mdi/flower.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--leaf",
+    "prefix": "mdi",
+    "name": "leaf",
+    "source": "https://api.iconify.design/mdi/leaf.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "mdi--palm-tree",
+    "prefix": "mdi",
+    "name": "palm-tree",
+    "source": "https://api.iconify.design/mdi/palm-tree.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--toucan",
+    "prefix": "game-icons",
+    "name": "toucan",
+    "source": "https://api.iconify.design/game-icons/toucan.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--duck",
+    "prefix": "game-icons",
+    "name": "duck",
+    "source": "https://api.iconify.design/game-icons/duck.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--daisy",
+    "prefix": "game-icons",
+    "name": "daisy",
+    "source": "https://api.iconify.design/game-icons/daisy.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--flower-twirl",
+    "prefix": "game-icons",
+    "name": "flower-twirl",
+    "source": "https://api.iconify.design/game-icons/flower-twirl.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--monstera-leaf",
+    "prefix": "game-icons",
+    "name": "monstera-leaf",
+    "source": "https://api.iconify.design/game-icons/monstera-leaf.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--palm-tree",
+    "prefix": "game-icons",
+    "name": "palm-tree",
+    "source": "https://api.iconify.design/game-icons/palm-tree.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--sunflower",
+    "prefix": "game-icons",
+    "name": "sunflower",
+    "source": "https://api.iconify.design/game-icons/sunflower.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--solid-leaf",
+    "prefix": "game-icons",
+    "name": "solid-leaf",
+    "source": "https://api.iconify.design/game-icons/solid-leaf.svg?height=64&color=%2317233F"
+  },
+  {
+    "key": "game-icons--vine-leaf",
+    "prefix": "game-icons",
+    "name": "vine-leaf",
+    "source": "https://api.iconify.design/game-icons/vine-leaf.svg?height=64&color=%2317233F"
+  }
+]
