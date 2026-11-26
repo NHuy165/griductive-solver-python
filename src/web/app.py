@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
 from pathlib import Path
 from typing import Any
@@ -13,53 +14,89 @@ from src.web.session import GameSession
 
 ROOT = Path(__file__).resolve().parents[2]
 MAPS_DIR = ROOT / "src" / "maps"
+LEVEL_META_PATH = MAPS_DIR / "level_metadata.json"
 
-LEVEL_META: dict[str, dict[str, str]] = {
-    "level_1.json": {
-        "title": "Vườn chuối",
-        "subtitle": (
-            "Một buổi sáng yên bình trong vườn chuối — nhưng có người "
-            "đang giấu điều gì đó."
-        ),
-    },
-    "level_2.json": {
-        "title": "Đầm lầy",
-        "subtitle": (
-            "Sương mù che khuất những lá bài. Hãy lần theo từng manh mối "
-            "đã được mở."
-        ),
-    },
-    "level_3.json": {
-        "title": "Rừng mưa",
-        "subtitle": (
-            "Rừng mưa rậm rạp, nơi mọi manh mối đều đúng và không ai "
-            "được phép đoán."
-        ),
-    },
-    "level_4.json": {
-        "title": "Bãi biển",
-        "subtitle": (
-            "Nắng và gió biển. Chỉ những kết luận chắc chắn mới được "
-            "chấp nhận."
-        ),
-    },
-    "level_5.json": {
-        "title": "Hang đá",
-        "subtitle": (
-            "Những manh mối so sánh và chẵn lẻ bắt đầu xuất hiện. "
-            "Hãy cẩn thận với từng bước suy luận."
-        ),
-    },
-    "level_6.json": {
-        "title": "Đảo nhiệt đới",
-        "subtitle": (
-            "Hòn đảo lớn nhất: 4×4, đủ chín loại manh mối, dành cho "
-            "người chơi muốn thử thách."
-        ),
-    },
-}
+LOGGER = logging.getLogger(__name__)
 
 EXTENSION_TYPES = {"IMPLIES", "COMPARE", "PARITY"}
+
+
+def _load_level_meta() -> dict[str, dict[str, str]]:
+    """Đọc metadata màn chơi từ ``src/maps/level_metadata.json``.
+
+    Tệp có thể dùng trực tiếp dạng ``{"level_01.json": {...}}`` hoặc bọc
+    trong khóa ``"levels"``. Mỗi mục cần có ``title``; ``subtitle`` là tùy
+    chọn. Tên tệp được chuẩn hóa về dạng ``*.json`` để dễ dùng.
+    """
+
+    if not LEVEL_META_PATH.exists():
+        LOGGER.warning(
+            "Không tìm thấy %s; dùng metadata mặc định.", LEVEL_META_PATH
+        )
+        return {}
+
+    try:
+        raw = json.loads(LEVEL_META_PATH.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        LOGGER.warning("Không đọc được %s: %s", LEVEL_META_PATH, error)
+        return {}
+
+    if not isinstance(raw, dict):
+        LOGGER.warning("%s phải là một JSON object.", LEVEL_META_PATH)
+        return {}
+
+    entries = raw.get("levels", raw)
+    if not isinstance(entries, dict):
+        LOGGER.warning(
+            "Khóa 'levels' trong %s phải là một JSON object.",
+            LEVEL_META_PATH,
+        )
+        return {}
+
+    metadata: dict[str, dict[str, str]] = {}
+    for key, value in entries.items():
+        if not isinstance(key, str) or not isinstance(value, dict):
+            continue
+
+        title = value.get("title")
+        subtitle = value.get("subtitle", "")
+        if not isinstance(title, str) or not title.strip():
+            continue
+
+        filename = Path(key).name
+        if not filename.endswith(".json"):
+            filename += ".json"
+
+        metadata[filename] = {
+            "title": title.strip(),
+            "subtitle": subtitle.strip() if isinstance(subtitle, str) else "",
+        }
+
+    return metadata
+
+
+def _default_level_meta(
+    number: int,
+    size: int,
+    clue_types: set[str],
+    generation: Any,
+) -> dict[str, str]:
+    """Tạo metadata tạm cho màn chưa có mục trong tệp metadata."""
+
+    details = [f"Màn {size}×{size}"]
+    if isinstance(generation, dict):
+        difficulty = generation.get("difficulty")
+        if isinstance(difficulty, str) and difficulty.strip():
+            details.append(f"mức {difficulty.strip().lower()}")
+    details.append(f"{len(clue_types)} loại manh mối")
+
+    return {
+        "title": "Màn chơi mới",
+        "subtitle": " · ".join(details) + ".",
+    }
+
+
+LEVEL_META = _load_level_meta()
 
 
 def _walk_clue_types(clue: dict[str, Any]) -> set[str]:
@@ -74,6 +111,9 @@ def _discover_levels() -> list[dict[str, Any]]:
     levels: list[dict[str, Any]] = []
 
     for path in sorted(MAPS_DIR.glob("level_*.json")):
+        if path.name == LEVEL_META_PATH.name:
+            continue
+
         try:
             number = int(path.stem.split("_")[1])
         except (IndexError, ValueError):
@@ -84,15 +124,14 @@ def _discover_levels() -> list[dict[str, Any]]:
         for person in data["people"]:
             clue_types |= _walk_clue_types(person["clue"])
 
-        meta = LEVEL_META.get(
-            path.name,
-            {
-                "title": f"Màn {number}",
-                "subtitle": "Một màn chơi Griductive.",
-            },
-        )
         extensions = sorted(clue_types & EXTENSION_TYPES)
         size = int(data["size"])
+        meta = LEVEL_META.get(path.name) or _default_level_meta(
+            number,
+            size,
+            clue_types,
+            data.get("generation"),
+        )
 
         if size >= 4:
             difficulty = "Thử thách"

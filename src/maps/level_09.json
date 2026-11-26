@@ -1,0 +1,140 @@
+{
+  "size": 3,
+  "initially_revealed": [
+    3
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          7
+        ],
+        "other_region": [
+          1
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          5,
+          6
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": true,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          3
+        ],
+        "is_criminal": true,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            4
+          ],
+          "is_criminal": false
+        }
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": false,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          1
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          2,
+          3,
+          8
+        ],
+        "k": 3
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          3,
+          5
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          3,
+          9
+        ]
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          6,
+          7,
+          9
+        ],
+        "k": 0
+      }
+    }
+  ],
+  "generation": {
+    "rank": 9,
+    "size": 3,
+    "tier_rank": 9,
+    "profile_rank": 9,
+    "difficulty": "Dễ",
+    "seed": 20261126
+  }
+}

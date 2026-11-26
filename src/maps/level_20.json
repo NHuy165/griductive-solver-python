@@ -1,0 +1,232 @@
+{
+  "size": 4,
+  "initially_revealed": [
+    3
+  ],
+  "people": [
+    {
+      "name": "Alice",
+      "occupation": "Artist",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          3,
+          5,
+          14,
+          15
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Bob",
+      "occupation": "Baker",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_MOST",
+        "region": [
+          3,
+          5,
+          9,
+          12,
+          13,
+          16
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Carol",
+      "occupation": "Banker",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "name": "Dave",
+      "occupation": "Chef",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          7,
+          12
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Eve",
+      "occupation": "Clerk",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          1,
+          6
+        ]
+      }
+    },
+    {
+      "name": "Frank",
+      "occupation": "Cook",
+      "is_criminal": true,
+      "clue": {
+        "type": "SAME",
+        "region": [
+          3,
+          15
+        ]
+      }
+    },
+    {
+      "name": "Grace",
+      "occupation": "Doctor",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          4
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Heidi",
+      "occupation": "Farmer",
+      "is_criminal": true,
+      "clue": {
+        "type": "COMPARE",
+        "region": [
+          5
+        ],
+        "other_region": [
+          8
+        ],
+        "equals": true
+      }
+    },
+    {
+      "name": "Ivan",
+      "occupation": "Judge",
+      "is_criminal": false,
+      "clue": {
+        "type": "EXACTLY",
+        "region": [
+          6,
+          12,
+          16
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Judy",
+      "occupation": "Mason",
+      "is_criminal": true,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          1,
+          12
+        ]
+      }
+    },
+    {
+      "name": "Karl",
+      "occupation": "Nurse",
+      "is_criminal": false,
+      "clue": {
+        "type": "DIFFERENT",
+        "region": [
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "name": "Leon",
+      "occupation": "Painter",
+      "is_criminal": true,
+      "clue": {
+        "type": "FACT",
+        "region": [
+          11
+        ],
+        "is_criminal": false
+      }
+    },
+    {
+      "name": "Mia",
+      "occupation": "Pilot",
+      "is_criminal": false,
+      "clue": {
+        "type": "PARITY",
+        "region": [
+          7,
+          9
+        ],
+        "is_odd": true
+      }
+    },
+    {
+      "name": "Nina",
+      "occupation": "Plumber",
+      "is_criminal": true,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          7,
+          14
+        ],
+        "k": 2
+      }
+    },
+    {
+      "name": "Oscar",
+      "occupation": "Sailor",
+      "is_criminal": false,
+      "clue": {
+        "type": "AT_LEAST",
+        "region": [
+          8,
+          15
+        ],
+        "k": 1
+      }
+    },
+    {
+      "name": "Peggy",
+      "occupation": "Singer",
+      "is_criminal": false,
+      "clue": {
+        "type": "IMPLIES",
+        "region": [
+          13
+        ],
+        "is_criminal": false,
+        "conclusion": {
+          "type": "FACT",
+          "region": [
+            10
+          ],
+          "is_criminal": true
+        }
+      }
+    }
+  ],
+  "generation": {
+    "rank": 20,
+    "size": 4,
+    "tier_rank": 10,
+    "profile_rank": 10,
+    "difficulty": "Trung bình",
+    "seed": 20261126
+  }
+}
