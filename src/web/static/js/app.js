@@ -1342,17 +1342,22 @@
     const stats = state.stats;
     const auto = state.last_auto;
     const timeStat = auto ? `${Number(auto.time_ms).toFixed(2)} ms` : "—";
+    // Whoever made the last verdict finished the board.
+    const lastStep = state.trace[state.trace.length - 1];
+    const byAgent = Boolean(lastStep && lastStep.kind === "auto");
+    const levelTitle = `“${escapeHtml(state.level.title)}”`;
+    const heading = byAgent ? "AGENT ĐÃ TỰ CHƠI XONG" : "KẾT LUẬN TOÀN BỘ";
+    const message = byAgent
+      ? `Agent đã tự chơi xong màn ${levelTitle}: toàn bộ ${state.map_size} nhân vật được kết luận từ manh mối công khai, không đoán mò.`
+      : `Bạn đã suy luận chính xác toàn bộ ${state.map_size} nhân vật của màn ${levelTitle} hoàn toàn từ manh mối công khai, không cần đoán mò.`;
     const overlay = document.createElement("div");
     overlay.className = "modal win-overlay";
     overlay.innerHTML = `
       <div class="modal-backdrop" data-close-win></div>
       <div class="modal-panel win-panel" role="dialog" aria-modal="true" aria-labelledby="win-title">
         <span class="modal-stamp">HOÀN TẤT MÀN ${state.level.number} // CHỨNG MINH THÀNH CÔNG</span>
-        <h2 class="win-title" id="win-title">KẾT LUẬN TOÀN BỘ</h2>
-        <p class="win-sub">
-          Bạn đã suy luận chính xác toàn bộ ${state.map_size} nhân vật của màn
-          “${escapeHtml(state.level.title)}” hoàn toàn từ manh mối công khai, không cần đoán mò.
-        </p>
+        <h2 class="win-title" id="win-title">${heading}</h2>
+        <p class="win-sub">${message}</p>
         <dl class="win-stats">
           <div class="win-stat"><dt>TỔNG BƯỚC</dt><dd>${state.trace.length}</dd></div>
           <div class="win-stat"><dt>MỆNH ĐỀ KB</dt><dd>${stats.kb_clauses}</dd></div>
