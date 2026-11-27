@@ -2,4 +2,5 @@
 .vscode/
 .venv/
 .git/
+experiments/results/
 __pycache__/
